@@ -4,7 +4,7 @@ Date: 2026-10-22
 
 ## Implemented
 
-The initial Node implementation is in `src/ts/`. It provides a filesystem-free conversion core, a Node asset resolver, and a CLI with staged output and optional JSON reports. It renders CommonMark/GFM, front matter, headings and footnotes; sanitizes author HTML; validates SVG and its CSS; embeds local raster images, SVG files, data URLs, and inline SVG in one self-contained HTML document. Editable viewer CSS/JavaScript are embedded during bundle generation. The repository also contains API/CLI/development documentation, a generated license inventory with available full license texts, and CLI/runtime/source bundle builders. The current package and runtime version is `0.3.1`, as requested after the initial `0.1.0` implementation.
+The initial Node implementation is in `src/ts/`. It provides a filesystem-free conversion core, a Node asset resolver, and a CLI with staged output and optional JSON reports. It renders CommonMark/GFM, front matter, headings and footnotes; sanitizes author HTML; validates SVG and its CSS; embeds local raster images, SVG files, data URLs, and inline SVG in one self-contained HTML document. Editable viewer CSS/JavaScript are embedded during bundle generation. The repository also contains API/CLI/development documentation, a generated license inventory with available full license texts, and CLI/runtime/source bundle builders. The current package and runtime version is `0.3.2`, as requested after the initial `0.1.0` implementation.
 
 Initial product choices in the implementation specification remain defaults, not individually user-confirmed limits. The 5 MiB image warning, 20 MiB output warning, and 100 MiB output cap were not changed after the measurements below; these measurements do not establish browser limits or performance guarantees.
 
@@ -50,3 +50,23 @@ These are single-run local measurements, not a benchmark series. The repeated-im
 - Exact large-image/output warning boundaries, report-commit failure, and concurrent output creation races.
 - A fresh dependency audit and license-obligation review immediately before public release.
 - The Release asset workflow has not yet run against a GitHub Release. No tag, GitHub Release, npm publication, or upload was created as part of this local change.
+
+## Syntax highlighting implementation
+
+Date: 2026-10-23. The feature plan and acceptance matrix are in [syntax-highlighting-plan.md](syntax-highlighting-plan.md). The implementation adds conversion-time highlighting for 13 language families using 12 explicit grammars, a fixed language alias map, safe token span reconstruction after sanitization, and embedded light/dark/print CSS. Unknown or unsupported languages remain plain. Per-block and per-document highlighter input caps are 256 KiB and 1 MiB.
+
+The runtime dependencies are exact-pinned to `lowlight@3.3.0` and `highlight.js@11.11.1`; dev dependencies include `@types/mdast@4.0.4` and `hast-util-from-html@2.0.3`. `npm audit` found 0 vulnerabilities. `npm run build:bundle` regenerated third-party notices for 210 locked package/version entries. Commit `34141b4` records the implementation and version increment from `0.3.1` to `0.3.2` together.
+
+## Syntax highlighting verification
+
+On Node `v26.12.0`, macOS Darwin `25.6.0` arm64 / Apple M2:
+
+- `npm test` — passed, 4 files and 75 tests.
+- `npm run smoke:all` — passed, including CLI/runtime copied outside the repository, release staging, and release-asset smoke checks.
+- `npm audit` — 0 vulnerabilities.
+- `node22` and `node24` executables were not on `PATH`; those runtimes remain unverified.
+- The browser control layer reported both Chrome and in-app browser unavailable, so light/dark, JavaScript-disabled, 320px, print, and network-request checks remain unverified.
+
+The same 1,513-byte Markdown benchmark was converted before and after the change. On this machine, the conversion median excluding the first run changed from 2.316 ms to 4.240 ms; output grew from 12,287 to 19,547 bytes. The CLI bundle grew from 1,606,629 to 1,771,358 bytes and the runtime bundle from 1,583,325 to 1,748,054 bytes. At the configured caps, a 256 KiB code block took 178.272 ms median, a block-limit fallback took 7.911 ms, and four blocks totaling a 1 MiB document budget took 699.735 ms. The process peak RSS across those repeated cap measurements was 265.44 MiB. These are measurements on one host and representative inputs, not performance guarantees. Before/after HTML and measurement data are ignored files under `workplace/`.
+
+Contrast ratios were calculated against the actual code and diff backgrounds. The normal token palette minimum is 4.77:1 in light mode and 7.04:1 in dark mode; diff text minimums are 5.42:1 and 7.16:1 respectively. Browser visual review remains pending.

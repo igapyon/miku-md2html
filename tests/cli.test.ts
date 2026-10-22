@@ -116,4 +116,26 @@ describe('CLI', () => {
     expect(await runCli([tooLarge, '--out', path.join(root, 'large.html'), '--max-output-mib', '1'], { stdout: capture().stream, stderr: largeErr.stream })).toBe(1);
     expect(largeErr.text()).toContain('E_INPUT_TOO_LARGE');
   });
+
+  it('writes successful HTML and a report when an oversized highlighted block is skipped', async () => {
+    const root = await tempRoot();
+    const input = path.join(root, 'large-code.md');
+    const output = path.join(root, 'large-code.html');
+    const report = path.join(root, 'report.json');
+    const code = 'x;'.repeat(131_072);
+    await writeFile(input, `\`\`\`javascript\n${code}\n\`\`\`\n`);
+    const stdout = capture();
+    const stderr = capture();
+    const exitCode = await runCli([input, '--out', output, '--report-json', report], { stdout: stdout.stream, stderr: stderr.stream });
+    expect(exitCode).toBe(0);
+    expect(stdout.text()).toContain('Converted');
+    expect(stderr.text()).toContain('W_CODE_HIGHLIGHT_SKIPPED');
+    const html = await readFile(output, 'utf8');
+    expect(html).toContain(`<code>${'x;'.repeat(512)}`);
+    expect(html).toContain(`${'x;'.repeat(512)}\n</code>`);
+    expect(/<pre><code([^>]*)>/.exec(html)?.[1] ?? '').toBe('');
+    const reportValue = JSON.parse(await readFile(report, 'utf8'));
+    expect(reportValue.success).toBe(true);
+    expect(reportValue.diagnostics).toEqual([expect.objectContaining({ code: 'W_CODE_HIGHLIGHT_SKIPPED', severity: 'warning' })]);
+  });
 });

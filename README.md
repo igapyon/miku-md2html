@@ -5,7 +5,7 @@
 ## Use
 
 ```sh
-node miku-md2html-0.3.1.mjs ./guide.md --out ./out/guide.html
+node miku-md2html-0.3.2.mjs ./guide.md --out ./out/guide.html
 ```
 
 When a GitHub Release for the exact `v<package version>` tag is published, the [release workflow](.github/workflows/release-cli-runtime-bundles.yml) builds and attaches the versioned CLI, import runtime, and source archive. Until a release is published, install dependencies and run the source-tree CLI:
@@ -22,14 +22,36 @@ The CLI creates missing output directories. It refuses existing destinations unl
 Use `--asset-root` to allow images outside the Markdown file's directory. Relative image paths are still resolved from the Markdown file's directory:
 
 ```sh
-node miku-md2html-0.3.1.mjs ./docs/guide.md --out ./out/guide.html --asset-root ./
+node miku-md2html-0.3.2.mjs ./docs/guide.md --out ./out/guide.html --asset-root ./
 ```
 
 `--report-json result.json` writes a versioned JSON report. Success writes a one-line summary to stdout; warnings and errors go to stderr. Exit codes are 0 for success, 1 for conversion or file failures, 2 for usage errors, and 3 for unexpected internal errors.
 
 ## Supported Markdown
 
-The converter supports CommonMark structures and GitHub Flavored Markdown tables, task lists, strikethrough, autolinks, and footnotes. Headings receive stable IDs and a native `details` table of contents. Code blocks are displayed without syntax highlighting and get copy buttons when JavaScript is enabled. Tables and code blocks scroll locally on narrow screens. Print styles keep document content readable.
+The converter supports CommonMark structures and GitHub Flavored Markdown tables, task lists, strikethrough, autolinks, and footnotes. Headings receive stable IDs and a native `details` table of contents. Recognized fenced code blocks receive syntax highlighting during conversion and get copy buttons when JavaScript is enabled. The generated CSS and token markup are embedded in the HTML, so highlighting works offline and with JavaScript disabled. Tables and code blocks scroll locally on narrow screens. Print styles keep document content readable.
+
+### Code block languages
+
+The first whitespace-delimited token after a fence is matched case-insensitively. Additional fence metadata is ignored. The accepted names are fixed:
+
+| Language | Accepted names |
+| --- | --- |
+| Markdown | `markdown`, `md` |
+| Java | `java` |
+| JavaScript / ECMAScript / Node.js | `javascript`, `js`, `ecmascript`, `node`, `nodejs` |
+| TypeScript | `typescript`, `ts` |
+| Python | `python`, `py`, `python3` |
+| CSS | `css` |
+| HTML | `html`, `htm` |
+| XML / SVG source | `xml`, `svg` |
+| JSON | `json` |
+| Shell / Bash | `shell`, `sh`, `bash` |
+| YAML | `yaml`, `yml` |
+| Diff / Patch | `diff`, `patch` |
+| PowerShell | `powershell`, `pwsh`, `ps1` |
+
+Unlabeled, plain-text, and unrecognized fenced blocks remain ordinary code without automatic language detection. Inline code, indented code, and code inside author-supplied raw HTML are not highlighted. Highlighting preserves `code.textContent`, which remains the copy-button content. Code exceeding 256 KiB or a document's remaining 1 MiB highlighting budget is shown as plain code with a warning; these limits bound input bytes passed to the highlighter, not its execution time.
 
 The first H1 supplies the document title unless `--title` or front matter `title` overrides it. The title H1 remains in the document. Front matter accepts string fields `title`, `description`, and `lang`; `lang` defaults to `ja`.
 

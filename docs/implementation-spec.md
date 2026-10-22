@@ -85,7 +85,7 @@ REQ-002: HTMLだけを別のディレクトリへ移し、file://で開いて、
 
 REQ-003: 初版は単一のローカルMarkdown入力を扱います。ディレクトリ一括変換、サイト生成、テンプレート言語、任意JS/CSSの取り込み、画像の再圧縮/縮小、PDF生成、ブラウザー版UI、Java版、Skills/MCPは後続候補です。入力にMermaid/数式コードがあれば、初版は通常のコードとして表示します。
 
-REQ-004: 初期実装時のpackage version案は0.1.0でした。利用者指定により現在のpackage/runtime versionは0.3.1です。Node.js >=22を対象とし、22と24で動作確認し、配布buildは24を使います。skill既定の>=20からの変更理由は、設計確認時点でNode20がEOLであることです。実装時には公式状況と使用dependencyのengine条件を再確認します。
+REQ-004: 初期実装時のpackage version案は0.1.0でした。利用者指定により現在のpackage/runtime versionは0.3.2です。Node.js >=22を対象とし、22と24で動作確認し、配布buildは24を使います。skill既定の>=20からの変更理由は、設計確認時点でNode20がEOLであることです。実装時には公式状況と使用dependencyのengine条件を再確認します。
 
 ## 4. 入力、文字列、front matter
 
@@ -107,7 +107,7 @@ REQ-020: CommonMarkを基礎に、表、task list、strikethrough、autolink、�
 
 REQ-021: soft breakは通常のMarkdownとして扱い、明示hard breakだけbrへ変換します。task listのcheckboxはdisabledとし、閲覧者のクリックで保存状態が変わるUIにはしません。表のalignmentは生成側の固定CSS classへ変換します。
 
-REQ-022: codeの言語名は検証してclassへ使います。初版は言語名を表示できればよく、syntax highlighting engineは含めません。コード内容はHTMLとして解釈しません。コピー対象はcodeのtextContentであり、ボタン名などを混ぜません。
+REQ-022: 言語を明示したfenced code blockは変換時にsyntax highlightingします。対応言語名とaliasは[README](../README.md#code-block-languages)の表に固定します。未知/未指定/plain指定は自動推定せず通常表示にします。inline code、indented code、author raw HTML由来のpre/codeは色付けしません。code本文はHTMLとして解釈せず、色付け前後のcode.textContentを一致させます。コピー対象はcode.textContentであり、token markupやbutton textを混ぜません。CSSとtoken markupをHTMLへ同梱し、browser runtimeでhighlighterを取得・実行しません。
 
 REQ-023: H1-H6にdocument内で一意なIDを付けます。slugはplain textをNFC正規化、locale非依存の小文字化、Unicode whitespaceをhyphen化、文字/数字/結合文字/underscore/hyphen以外を除去し、連続hyphenと両端hyphenを整理します。空ならsectionです。IDはmiku-h-を前置します。重複時は-2、-3…を試し、既使用IDとの衝突がなくなるまで進めます。全見出しをsource順に処理します。
 
@@ -118,6 +118,8 @@ REQ-024: 目次はH1-H6をsource順に含め、階層はlevel情報で表現し�
 REQ-025: 脚注IDとbackrefは生成側の予約namespaceへ統一し、sanitize後も相互リンクを維持します。入力HTMLのid/nameでheading・脚注・UIのIDを上書きできない設計にします。parser/sanitizerのprefix処理をfixtureで確かめてからmappingを固定してください。
 
 REQ-026: 通常リンクはhttp/https/mailto、相対URL、fragmentを許可し、javascript/data/file等の明示schemeを拒否してW_LINK_REMOVEDにします。外部リンクは同一tabで通常遷移します。.mdを.htmlへ自動変換しません。リンク先ファイルをコピーする処理はありません。
+
+REQ-027: 色分け対象本文のUTF-8 bytesは1 blockあたり256 KiB、1 documentあたり合計1 MiBを上限とします。空codeは対象外です。上限超過したblockはplain codeで保持し、`W_CODE_HIGHLIGHT_SKIPPED` warningをsource位置、reason、bytes、limit付きで記録します。engine/token tree処理の例外、不正node/class、本文不一致はplain codeへfallbackし、`W_CODE_HIGHLIGHT_FAILED` warningをlanguage正規ID付きで記録します。これらのwarningだけでは変換失敗にしません。code本文や例外stackを診断へ含めません。境界値ちょうどは処理対象です。block上限でskipしたbytesはdocument budgetへ加算しません。engineへ渡したbytesは例外時も加算します。後続blockは残量へ収まれば処理します。このbyte budgetは正規表現処理の実行時間timeoutではありません。
 
 ## 6. HTML本文とSVGの処理
 
@@ -200,7 +202,7 @@ miku-md2html --help
 miku-md2html --version
 ~~~
 
-単体配布後の実行形はnode miku-md2html-0.3.1.mjs input.md --out output.htmlです。これは将来の配布asset名の案であり、現時点で公開済みではありません。
+単体配布後の実行形はnode miku-md2html-0.3.2.mjs input.md --out output.htmlです。これは将来の配布asset名の案であり、現時点で公開済みではありません。
 
 | 引数/option | 契約 |
 | --- | --- |
@@ -301,7 +303,7 @@ REQ-100: --report-jsonはschemaVersion:'1'、tool、success、exitCode、input�
 ~~~json
 {
   "schemaVersion": "1",
-  "tool": { "name": "miku-md2html", "version": "0.3.1" },
+  "tool": { "name": "miku-md2html", "version": "0.3.2" },
   "success": true,
   "exitCode": 0,
   "input": { "path": "input.md", "bytes": 128 },
@@ -340,6 +342,7 @@ REQ-102: diagnosticsはsource位置順、同位置はcodeのUTF-16 code unit順�
 | E_OUTPUT_EXISTS / E_OUTPUT_COLLISION / E_OUTPUT_WRITE | error | 出力保護/I/O |
 | E_REPORT_WRITE | error | reportの保存失敗 |
 | E_INTERNAL | error | 想定外例外。CLI exit3 |
+| W_CODE_HIGHLIGHT_SKIPPED / W_CODE_HIGHLIGHT_FAILED | warning | syntax highlightingのbyte上限超過またはengine/token tree fallback |
 | W_METADATA_TYPE / W_HTML_SANITIZED / W_LINK_REMOVED | warning | 不正shape、明示された表示内容の変更 |
 | W_ANCHOR_UNRESOLVED | warning | 同一文書の参照先heading/脚注が見つからない |
 | W_LARGE_IMAGE / W_LARGE_IMAGE_DIMENSIONS / W_LARGE_OUTPUT | warning | 既定の容量/寸法警告 |
@@ -347,8 +350,8 @@ REQ-102: diagnosticsはsource位置順、同位置はcodeのUTF-16 code unit順�
 ## 14. 処理順とmoduleの構成案
 
 1. CLI引数、input/output/report/rootを検証し、help/versionなら即終了します。
-2. inputのstat/UTF-8を確認し、front matterとMarkdownをsource位置付きで解析します。
-3. MarkdownをHTML ASTへ変換し、raw HTMLを構文解析します。SVG subtreeを独立資産化し、通常HTMLをsanitizeします。
+2. inputのstat/UTF-8を確認し、front matterとMarkdownをsource位置付きで解析します。fenced codeの言語とsource位置をAST変換前に記録します。
+3. MarkdownをHTML ASTへ変換し、raw HTMLを構文解析します。SVG subtreeを独立資産化し、通常HTMLをsanitizeします。sanitize後、記録済みのMarkdown fenceと位置・本文が一致するcodeだけに安全なtoken spanを付けます。
 4. heading/title/目次/脚注のIDとリンクを確定し、画像参照を収集します。
 5. image resolverのdescribe、root/衝突確認、payload見積もりを行います。明らかな超過で打ち切ります。
 6. 制限付きで画像bytesを読み、画像/SVGを検証し、data URLへ置換します。

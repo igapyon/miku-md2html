@@ -12,6 +12,15 @@
   --primary-container: #e4e8ff;
   --on-primary-container: #172453;
   --focus: #31478f;
+  --syntax-keyword: #5263a6;
+  --syntax-string: #2f6b48;
+  --syntax-number: #805313;
+  --syntax-name: #6f4b85;
+  --syntax-comment: #5d606b;
+  --syntax-addition: #2f6b48;
+  --syntax-addition-bg: #e6f0e8;
+  --syntax-deletion: #993f43;
+  --syntax-deletion-bg: #f8e7e7;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -31,6 +40,15 @@
     --primary-container: #394675;
     --on-primary-container: #e0e5ff;
     --focus: #c6d0ff;
+    --syntax-keyword: #b4c2ff;
+    --syntax-string: #a5d6ac;
+    --syntax-number: #e5c07b;
+    --syntax-name: #d9b4e7;
+    --syntax-comment: #b9bdc7;
+    --syntax-addition: #a5d6ac;
+    --syntax-addition-bg: #203c2c;
+    --syntax-deletion: #f0b1b5;
+    --syntax-deletion-bg: #462a2d;
   }
 }
 
@@ -118,6 +136,35 @@ pre {
   tab-size: 2;
 }
 pre code { color: var(--text); white-space: pre; overflow-wrap: normal; }
+pre > code.miku-md2html-highlight .hljs-keyword,
+pre > code.miku-md2html-highlight .hljs-selector-tag,
+pre > code.miku-md2html-highlight .hljs-doctag { color: var(--syntax-keyword); }
+pre > code.miku-md2html-highlight .hljs-string,
+pre > code.miku-md2html-highlight .hljs-regexp { color: var(--syntax-string); }
+pre > code.miku-md2html-highlight .hljs-number,
+pre > code.miku-md2html-highlight .hljs-literal { color: var(--syntax-number); }
+pre > code.miku-md2html-highlight .hljs-title,
+pre > code.miku-md2html-highlight .hljs-section,
+pre > code.miku-md2html-highlight .hljs-type,
+pre > code.miku-md2html-highlight .hljs-built_in,
+pre > code.miku-md2html-highlight .hljs-attr,
+pre > code.miku-md2html-highlight .hljs-attribute,
+pre > code.miku-md2html-highlight .hljs-variable,
+pre > code.miku-md2html-highlight .hljs-name { color: var(--syntax-name); }
+pre > code.miku-md2html-highlight .hljs-comment,
+pre > code.miku-md2html-highlight .hljs-quote { color: var(--syntax-comment); }
+pre > code.miku-md2html-highlight .hljs-addition {
+  border-radius: 0.2em;
+  background: var(--syntax-addition-bg);
+  color: var(--syntax-addition);
+}
+pre > code.miku-md2html-highlight .hljs-deletion {
+  border-radius: 0.2em;
+  background: var(--syntax-deletion-bg);
+  color: var(--syntax-deletion);
+}
+pre > code.miku-md2html-highlight .hljs-strong { font-weight: 700; }
+pre > code.miku-md2html-highlight .hljs-emphasis { font-style: italic; }
 table {
   display: block;
   width: 100%;
@@ -206,6 +253,15 @@ section[data-footnotes] {
     --primary-container: #e9edff;
     --on-primary-container: #172453;
     --focus: #263b78;
+    --syntax-keyword: #111111;
+    --syntax-string: #111111;
+    --syntax-number: #111111;
+    --syntax-name: #111111;
+    --syntax-comment: #333333;
+    --syntax-addition: #111111;
+    --syntax-addition-bg: transparent;
+    --syntax-deletion: #111111;
+    --syntax-deletion-bg: transparent;
   }
   body { background: #ffffff; }
   main { width: 100%; padding: 0; }

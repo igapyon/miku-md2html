@@ -16,6 +16,7 @@ import { serializeInlineSvg } from '../assets/svg.js';
 import { addDiagnostic, hasErrors, sourcePosition, stableDiagnostics } from './diagnostics.js';
 import { parseFrontMatter, isValidLanguageTag } from './front-matter.js';
 import { slugify, uniqueHeadingIds } from './slug.js';
+import { applySyntaxHighlighting, collectCodeBlockSources } from './syntax-highlight.js';
 import { themeCss, viewerScript } from '../generated/viewer-assets.js';
 
 const MiB = 1_048_576;
@@ -497,7 +498,9 @@ export async function convertMarkdownToHtml(request: ConvertRequest): Promise<Co
     .use(remarkGfm)
     .use(remarkRehype, { allowDangerousHtml: true, clobberPrefix: 'miku-md2html-generated-' })
     .use(rehypeRaw);
-  const tree = await processor.run(processor.parse(frontMatter.body)) as Root;
+  const markdownTree = processor.parse(frontMatter.body) as import('mdast').Root;
+  const codeBlockSources = collectCodeBlockSources(markdownTree);
+  const tree = await processor.run(markdownTree) as Root;
   const localCache = new Map<string, Promise<{ id: string; label: string; byteLength: number }>>();
   const pendingLocal: PendingLocal[] = [];
   const records = new Map<string, AssetRecord>();
@@ -536,6 +539,8 @@ export async function convertMarkdownToHtml(request: ConvertRequest): Promise<Co
     stats.embeddedPayloadBytes = payloadBytes.value;
     return resultFailure(metadata, diagnostics, stats);
   }
+
+  applySyntaxHighlighting(tree, codeBlockSources, diagnostics, frontMatter.lineOffset);
 
   const skeleton = renderDocument(tree, metadata, toc);
   let estimatedBytes = Buffer.byteLength(skeleton, 'utf8');
