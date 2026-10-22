@@ -1,0 +1,35 @@
+(() => {
+  const isJapanese = /^ja(?:-|$)/i.test(document.documentElement.lang);
+  const labels = isJapanese
+    ? { copy: 'コードをコピー', copied: 'コピーしました。', manual: 'コードを選択しました。手動でコピーしてください。' }
+    : { copy: 'Copy code', copied: 'Copied.', manual: 'Code selected. Copy it manually.' };
+
+  for (const pre of document.querySelectorAll('pre')) {
+    const code = pre.querySelector(':scope > code');
+    if (!code) continue;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'miku-md2html-copy';
+    button.textContent = labels.copy;
+    button.setAttribute('aria-label', labels.copy);
+    const status = document.createElement('span');
+    status.className = 'miku-md2html-copy-status';
+    status.setAttribute('aria-live', 'polite');
+    button.addEventListener('click', async () => {
+      try {
+        if (!navigator.clipboard?.writeText) throw new Error('clipboard unavailable');
+        await navigator.clipboard.writeText(code.textContent ?? '');
+        status.textContent = labels.copied;
+      } catch {
+        const selection = document.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(code);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        status.textContent = labels.manual;
+      }
+    });
+    pre.prepend(button);
+    pre.after(status);
+  }
+})();
