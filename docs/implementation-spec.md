@@ -85,7 +85,7 @@ REQ-002: HTMLだけを別のディレクトリへ移し、file://で開いて、
 
 REQ-003: 初版は単一のローカルMarkdown入力を扱います。ディレクトリ一括変換、サイト生成、テンプレート言語、任意JS/CSSの取り込み、画像の再圧縮/縮小、PDF生成、ブラウザー版UI、Java版、Skills/MCPは後続候補です。入力にMermaid/数式コードがあれば、初版は通常のコードとして表示します。
 
-REQ-004: 初期実装時のpackage version案は0.1.0でした。利用者指定により現在のpackage/runtime versionは0.3.0です。Node.js >=22を対象とし、22と24で動作確認し、配布buildは24を使います。skill既定の>=20からの変更理由は、設計確認時点でNode20がEOLであることです。実装時には公式状況と使用dependencyのengine条件を再確認します。
+REQ-004: 初期実装時のpackage version案は0.1.0でした。利用者指定により現在のpackage/runtime versionは0.3.1です。Node.js >=22を対象とし、22と24で動作確認し、配布buildは24を使います。skill既定の>=20からの変更理由は、設計確認時点でNode20がEOLであることです。実装時には公式状況と使用dependencyのengine条件を再確認します。
 
 ## 4. 入力、文字列、front matter
 
@@ -180,9 +180,9 @@ REQ-054: CLIは入力Markdownのstatサイズが設定HTML上限より大きい�
 
 REQ-060: UTF-8、BOMなし、LF、末尾newline1個とします。doctype/html/head/body、charset/viewport/title、任意description、固定style、目次、main/article、固定scriptを持つ完全文書です。sourceの絶対path、生成日時、host名を自動挿入しません。
 
-REQ-061: CSSはsystem font、本文max-width、320pxからの可読性、見出し間隔、code/tableの局所横scroll、画像max-width:100%/height:autoを扱います。body全体が横overflowする状態を避けます。元画像の画素数をCSSの縮小表示で減らしたことにしません。印刷では操作ボタンと目次の開閉UIを非表示にし、本文とtableを読める状態にします。
+REQ-061: CSSはsystem font、本文max-width、320pxからの可読性、見出し間隔、code/tableの局所横scroll、画像max-width:100%/height:autoを扱います。Material Design 3の色の役割を参考に、ニュートラルな背景と控えめな藍色を使い、light/darkで意味を保ったまま切り替えます。角丸のsurfaceと十分な余白で本文を読みやすくします。body全体が横overflowする状態を避けます。元画像の画素数をCSSの縮小表示で減らしたことにしません。印刷では操作ボタンと目次の開閉UIを非表示にし、本文とtableを読める状態にします。
 
-REQ-062: 目次はnative details/summaryで開閉でき、JavaScript無効でも使えます。コードのコピーボタンはJSが動く場合だけ追加します。clipboard.writeText成功後だけ成功表示し、利用できない場合はコードを選択して手動copyの案内を出します。readonly codeの内容を変更しません。statusはaria-liveで伝えます。
+REQ-062: 目次はnative details/summaryで開閉でき、JavaScript無効でも使えます。コードのコピーボタンはJSが動く場合だけ追加し、インラインSVGアイコンとaria-labelで操作を示します。clipboard.writeText成功後だけ成功表示し、利用できない場合はコードを選択して手動copyの案内を出します。readonly codeの内容を変更しません。statusはaria-liveで伝えます。
 
 REQ-063: UI文字列はlangがja系なら日本語、それ以外は英語です。CLI helpと診断messageは英語を基本とし、diagnostic codeを安定識別子にします。本文を不必要に翻訳しません。
 
@@ -200,7 +200,7 @@ miku-md2html --help
 miku-md2html --version
 ~~~
 
-単体配布後の実行形はnode miku-md2html-0.3.0.mjs input.md --out output.htmlです。これは将来の配布asset名の案であり、現時点で公開済みではありません。
+単体配布後の実行形はnode miku-md2html-0.3.1.mjs input.md --out output.htmlです。これは将来の配布asset名の案であり、現時点で公開済みではありません。
 
 | 引数/option | 契約 |
 | --- | --- |
@@ -301,7 +301,7 @@ REQ-100: --report-jsonはschemaVersion:'1'、tool、success、exitCode、input�
 ~~~json
 {
   "schemaVersion": "1",
-  "tool": { "name": "miku-md2html", "version": "0.3.0" },
+  "tool": { "name": "miku-md2html", "version": "0.3.1" },
   "success": true,
   "exitCode": 0,
   "input": { "path": "input.md", "bytes": 128 },

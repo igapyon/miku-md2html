@@ -1,6 +1,6 @@
 {
   "name": "miku-md2html",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "type": "module",
   "description": "Convert Markdown and local images into a self-contained HTML document.",
@@ -24,7 +24,9 @@
     "build:all": "npm run build && npm run build:bundle",
     "smoke:bundle": "node scripts/smoke-cli-bundle.mjs",
     "smoke:runtime": "node scripts/smoke-runtime-bundle.mjs",
-    "smoke:all": "npm run build:all && npm run smoke:bundle && npm run smoke:runtime"
+    "release:stage": "node scripts/prepare-release-assets.mjs",
+    "smoke:release-assets": "node scripts/smoke-release-assets.mjs",
+    "smoke:all": "npm run build:all && npm run smoke:bundle && npm run smoke:runtime && npm run release:stage && npm run smoke:release-assets"
   },
   "dependencies": {
     "@xmldom/xmldom": "^0.9.10",

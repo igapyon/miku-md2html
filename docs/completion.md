@@ -4,7 +4,7 @@ Date: 2026-10-22
 
 ## Implemented
 
-The initial Node implementation is in `src/ts/`. It provides a filesystem-free conversion core, a Node asset resolver, and a CLI with staged output and optional JSON reports. It renders CommonMark/GFM, front matter, headings and footnotes; sanitizes author HTML; validates SVG and its CSS; embeds local raster images, SVG files, data URLs, and inline SVG in one self-contained HTML document. Editable viewer CSS/JavaScript are embedded during bundle generation. The repository also contains API/CLI/development documentation, a generated license inventory with available full license texts, and CLI/runtime/source bundle builders. The current package and runtime version is `0.3.0`, as requested after the initial `0.1.0` implementation.
+The initial Node implementation is in `src/ts/`. It provides a filesystem-free conversion core, a Node asset resolver, and a CLI with staged output and optional JSON reports. It renders CommonMark/GFM, front matter, headings and footnotes; sanitizes author HTML; validates SVG and its CSS; embeds local raster images, SVG files, data URLs, and inline SVG in one self-contained HTML document. Editable viewer CSS/JavaScript are embedded during bundle generation. The repository also contains API/CLI/development documentation, a generated license inventory with available full license texts, and CLI/runtime/source bundle builders. The current package and runtime version is `0.3.1`, as requested after the initial `0.1.0` implementation.
 
 Initial product choices in the implementation specification remain defaults, not individually user-confirmed limits. The 5 MiB image warning, 20 MiB output warning, and 100 MiB output cap were not changed after the measurements below; these measurements do not establish browser limits or performance guarantees.
 
@@ -16,6 +16,14 @@ Initial product choices in the implementation specification remain defaults, not
 - A trailing-whitespace scan over the repository source/docs found no matches.
 
 The current automated tests cover deterministic HTML/title/heading IDs, GFM tables/task lists/footnotes, basic raw HTML sanitization, data URL images and repeated-asset accounting, SVG/CSS rejection cases, output byte limit behavior, resolver path containment/symlinks, CLI reports/collisions/UTF-8/input caps, and both bundle entrypoints. They do not yet cover every AC in the implementation specification; see the remaining items in `TODO.md`.
+
+## Follow-up boundary verification
+
+On 2026-10-22, the core tests were extended to check the image-dimension warning boundary: an image declaring exactly 40,000,000 pixels has no warning, while one declaring 40,008,000 pixels returns `W_LARGE_IMAGE_DIMENSIONS`. The fixture edits only the dimensions in a tiny PNG header; it avoids allocating a large image. Remaining boundary gaps are tracked in `TODO.md`.
+
+`npm test` passed on Node `v26.12.0` after this update: 3 test files, 17 tests.
+
+The Release asset workflow was added at `.github/workflows/release-cli-runtime-bundles.yml`. It checks out the published release tag, requires an exact `v<package.json version>` match, runs on Node 24, tests and smoke-checks the bundles, stages exactly three non-empty assets, and uploads only that staging directory. It has not yet run against a GitHub Release.
 
 ## Browser smoke
 
@@ -39,6 +47,6 @@ These are single-run local measurements, not a benchmark series. The repeated-im
 
 - Node.js 22 and 24: neither is installed in the current environment. Node 26 passing does not establish compatibility with those versions.
 - Chrome with JavaScript disabled, at 320px, in print mode, or with network requests instrumented.
-- Exact large-image/output warning boundaries, maximum-pixel warning, report-commit failure, and concurrent output creation races.
+- Exact large-image/output warning boundaries, report-commit failure, and concurrent output creation races.
 - A fresh dependency audit and license-obligation review immediately before public release.
-- Any release workflow, tag, commit, push, GitHub Release, npm publication, or upload.
+- The Release asset workflow has not yet run against a GitHub Release. No tag, GitHub Release, npm publication, or upload was created as part of this local change.
