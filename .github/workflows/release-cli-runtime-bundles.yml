@@ -1,0 +1,92 @@
+name: Release CLI/runtime bundles
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-cli-runtime-${{ github.event.release.id }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and attach release bundles
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out the release tag
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          persist-credentials: false
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Validate release tag
+        id: release_tag
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+
+          if [[ "${TAG_NAME}" != v* ]]; then
+            echo "Release tag must start with v: ${TAG_NAME}" >&2
+            exit 1
+          fi
+
+          VERSION="${TAG_NAME#v}"
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          if [[ "${VERSION}" != "${PACKAGE_VERSION}" ]]; then
+            echo "Release version (${VERSION}) must exactly match package.json version (${PACKAGE_VERSION})." >&2
+            exit 1
+          fi
+
+          echo "release_version=${VERSION}" >> "${GITHUB_OUTPUT}"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build release bundles
+        run: npm run build:bundle
+
+      - name: Verify bundle outputs
+        run: |
+          set -euo pipefail
+          test -s bundle/miku-md2html.mjs
+          test -s bundle/miku-md2html-runtime.mjs
+          test -s bundle/miku-md2html-sources.tgz
+
+      - name: Smoke test release bundles
+        run: |
+          set -euo pipefail
+          npm run smoke:bundle
+          npm run smoke:runtime
+
+      - name: Prepare release assets
+        env:
+          RELEASE_VERSION: ${{ steps.release_tag.outputs.release_version }}
+        run: npm run release:stage
+
+      - name: Smoke test staged release assets
+        env:
+          RELEASE_VERSION: ${{ steps.release_tag.outputs.release_version }}
+        run: npm run smoke:release-assets
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.event.release.tag_name }}
+          files: release-assets/*
+          fail_on_unmatched_files: true
+          token: ${{ github.token }}

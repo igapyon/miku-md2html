@@ -17,10 +17,19 @@ The detailed product requirements were prepared in the daybook workspace before 
 - `npm run build`: TypeScript contract check.
 - `npm test`: type check and unit/CLI tests.
 - `npm run build:bundle`: produce CLI, import runtime, and source archive under ignored `bundle/`.
-- `npm run smoke:all`: rebuild bundles and verify both bundle entrypoints.
+- `npm run release:stage`: prepare versioned CLI, runtime, and source assets under ignored `release-assets/`; the version must exactly match `package.json`.
+- `npm run smoke:release-assets`: exercise the staged CLI/runtime and inspect the staged source archive.
+- `npm run smoke:all`: rebuild bundles, verify both bundle entrypoints, stage release assets, and smoke-test the staged files.
 
-No GitHub Actions, Release publication, registry publication, push, or upload is part of this initial implementation.
+The initial implementation did not include GitHub Actions or Release publication. A Release asset workflow is now documented below; publishing a Release, registry publication, push, and upload remain human-operated GitHub or registry actions.
 
 ## Verification record
 
 Implementation and initial verification are recorded in [completion.md](completion.md). The user's initial browser target is Chrome. Node 22/24 compatibility remains pending because neither version is installed in the current environment; a Node 26 run does not establish those compatibility claims.
+
+## 2026-10-22 maintenance check
+
+- Shared reference date/commit: 2026-10-22, using the `igapyon-miku-soft-developer` reference recorded above (`5a7376da5db640749e7a9e0a9169221aaeea5cb2`); workflow: existing Node application maintenance.
+- Applied the locally verifiable 40-million-pixel warning boundary test. Exact-threshold and above-threshold outcomes are recorded in [completion](completion.md).
+- Deferred the remaining boundary checks in `TODO.md`. No Node CI workflow was added because the shared CI baseline remains a pending policy decision.
+- Added the Release asset workflow after the user's follow-up request. It uses `release: published`, exact `v<package version>` validation, Node 24, local test/build/smoke commands, and an exact three-file staging check. Current action majors were checked on 2026-10-22: checkout v7, setup-node v7, and softprops/action-gh-release v3. GitHub execution remains unverified until a Release is published.

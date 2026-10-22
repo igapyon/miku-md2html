@@ -10,8 +10,16 @@
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'miku-md2html-copy';
-    button.textContent = labels.copy;
     button.setAttribute('aria-label', labels.copy);
+    button.title = labels.copy;
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('viewBox', '0 0 24 24');
+    icon.setAttribute('aria-hidden', 'true');
+    icon.setAttribute('focusable', 'false');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', 'M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z');
+    icon.append(path);
+    button.append(icon);
     const status = document.createElement('span');
     status.className = 'miku-md2html-copy-status';
     status.setAttribute('aria-live', 'polite');

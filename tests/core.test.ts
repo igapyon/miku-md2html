@@ -5,6 +5,14 @@ import { AssetAccessError, type AssetResolver } from '../src/ts/types.js';
 
 const tinyPng = new Uint8Array(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Z2q0AAAAASUVORK5CYII=', 'base64'));
 
+function pngWithDimensions(width: number, height: number): Uint8Array {
+  const bytes = Uint8Array.from(tinyPng);
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  view.setUint32(16, width, false);
+  view.setUint32(20, height, false);
+  return bytes;
+}
+
 describe('convertMarkdownToHtml', () => {
   it('builds a deterministic standalone HTML document and derives heading ids and metadata', async () => {
     const markdown = `---
@@ -100,6 +108,26 @@ Note[^n].
     expect(result.stats.uniqueAssets).toBe(1);
     expect(result.stats.uniqueSourceAssetBytes).toBe(tinyPng.byteLength);
     expect(result.stats.embeddedPayloadBytes).toBe(2 * Buffer.from(tinyPng).toString('base64').length);
+  });
+
+  it('warns only when image dimensions exceed 40 million pixels', async () => {
+    async function convert(width: number, height: number) {
+      const bytes = pngWithDimensions(width, height);
+      const assets: AssetResolver = {
+        async describe(path) { return { id: path, label: path, byteLength: bytes.byteLength }; },
+        async read() { return bytes; },
+      };
+      return convertMarkdownToHtml({ markdown: '![large](large.png)', inputName: 'dimensions.md', assets });
+    }
+
+    const exact = await convert(5_000, 8_000);
+    expect(exact.success).toBe(true);
+    expect(exact.diagnostics.some((item) => item.code === 'W_LARGE_IMAGE_DIMENSIONS')).toBe(false);
+
+    const over = await convert(5_001, 8_000);
+    expect(over.success).toBe(true);
+    const warning = over.diagnostics.find((item) => item.code === 'W_LARGE_IMAGE_DIMENSIONS');
+    expect(warning?.details).toEqual({ width: 5_001, height: 8_000 });
   });
 
   it('rejects remote images and requires a resolver for local images', async () => {

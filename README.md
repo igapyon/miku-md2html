@@ -5,10 +5,10 @@
 ## Use
 
 ```sh
-node miku-md2html-0.3.0.mjs ./guide.md --out ./out/guide.html
+node miku-md2html-0.3.1.mjs ./guide.md --out ./out/guide.html
 ```
 
-The versioned CLI bundle is planned as a GitHub Release asset. Until a release is published, install dependencies and run the source-tree CLI:
+When a GitHub Release for the exact `v<package version>` tag is published, the [release workflow](.github/workflows/release-cli-runtime-bundles.yml) builds and attaches the versioned CLI, import runtime, and source archive. Until a release is published, install dependencies and run the source-tree CLI:
 
 ```sh
 npm install
@@ -22,7 +22,7 @@ The CLI creates missing output directories. It refuses existing destinations unl
 Use `--asset-root` to allow images outside the Markdown file's directory. Relative image paths are still resolved from the Markdown file's directory:
 
 ```sh
-node miku-md2html-0.3.0.mjs ./docs/guide.md --out ./out/guide.html --asset-root ./
+node miku-md2html-0.3.1.mjs ./docs/guide.md --out ./out/guide.html --asset-root ./
 ```
 
 `--report-json result.json` writes a versioned JSON report. Success writes a one-line summary to stdout; warnings and errors go to stderr. Exit codes are 0 for success, 1 for conversion or file failures, 2 for usage errors, and 3 for unexpected internal errors.
@@ -73,7 +73,7 @@ npm test
 npm run smoke:all
 ```
 
-`npm run build:bundle` creates the CLI, import runtime, and source archive under `bundle/`. Those generated files are ignored by Git and can be rebuilt from the tracked sources.
+`npm run build:bundle` creates the CLI, import runtime, and source archive under `bundle/`. `npm run release:stage` prepares versioned assets under `release-assets/`, and `npm run smoke:release-assets` checks the staged files. Both generated directories are ignored by Git and can be rebuilt from the tracked sources. `npm run smoke:all` includes both commands.
 
 See [development notes](docs/development.md), [TODO](TODO.md), and [miku-soft reference](docs/miku-soft-reference.md).
 
