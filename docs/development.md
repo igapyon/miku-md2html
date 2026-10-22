@@ -33,3 +33,10 @@ Implementation and initial verification are recorded in [completion.md](completi
 - Applied the locally verifiable 40-million-pixel warning boundary test. Exact-threshold and above-threshold outcomes are recorded in [completion](completion.md).
 - Deferred the remaining boundary checks in `TODO.md`. No Node CI workflow was added because the shared CI baseline remains a pending policy decision.
 - Added the Release asset workflow after the user's follow-up request. It uses `release: published`, exact `v<package version>` validation, Node 24, local test/build/smoke commands, and an exact three-file staging check. Current action majors were checked on 2026-10-22: checkout v7, setup-node v7, and softprops/action-gh-release v3. GitHub execution remains unverified until a Release is published.
+
+## 2026-10-23 syntax highlighting
+
+- Added build-time tokenization for the 13 documented language families using explicit grammar imports. Input classes remain filtered by the existing sanitizer; safe token spans are rebuilt after sanitization and checked against the original code text.
+- Embedded the syntax palette in `src/viewer/theme.css`, scoped to generated highlighted code. Output remains self-contained and copy content remains `code.textContent`.
+- Added fixed runtime and test dependency versions, alias/fallback/budget/security tests, CLI warning behavior tests, and the representative fixture. See [implementation specification](implementation-spec.md#5-markdown-見出し-リンク), [API reference](api.md), [CLI reference](cli.md), [plan and execution record](syntax-highlighting-plan.md), and [completion record](completion.md).
+- `npm test` passed with 75 tests and `npm run smoke:all` passed on Node 26.12.0. Node 22/24 and browser-specific visual checks remain unverified; see the completion record.

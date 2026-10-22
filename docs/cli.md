@@ -22,6 +22,8 @@ Value options accept `--key value` and `--key=value`. Values beginning with a hy
 
 The CLI never writes HTML or JSON to stdout. Success writes one summary line; diagnostics use stable `severity code source:line:column message` text on stderr. Exit codes are 0 success, 1 expected input/conversion/I/O failure, 2 usage error, and 3 unexpected internal error.
 
+Recognized fenced code blocks are highlighted while converting. See the [supported language names](../README.md#code-block-languages). Unknown or unlabeled blocks remain plain, and blocks skipped because of the highlighting byte limits produce a warning while the conversion can still succeed. Warnings appear on stderr and in `--report-json` diagnostics.
+
 Remote images are not downloaded. Missing or unsafe image references fail the conversion. Existing destinations are protected by default. `--force` only permits replacing an existing regular file; it does not permit symlink, directory, special-file, input, report, or referenced-image collisions.
 
 The `--report-json` file contains `schemaVersion`, `tool`, `success`, `exitCode`, `input`, `output`, `metadata`, `stats`, and `diagnostics`. The report is optional and is not required to open the HTML. When HTML is committed and report commit later fails, the valid HTML is kept and the CLI exits 1 with `E_REPORT_WRITE`.

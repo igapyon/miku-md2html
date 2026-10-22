@@ -13,4 +13,4 @@ export type {
 } from './types.js';
 
 export const productName = 'miku-md2html';
-export const version = '0.3.1';
+export const version = '0.3.2';
