@@ -1,0 +1,17 @@
+.DS_Store
+
+node_modules/
+.npm-cache/
+dist/
+bundle/
+release-assets/
+coverage/
+src/ts/generated/viewer-assets.ts
+*.log
+npm-debug.log*
+
+.vscode/mcp.json
+.codex/skills/
+
+workplace/*
+!workplace/.gitkeep
