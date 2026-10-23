@@ -1,8 +1,8 @@
-import { imageSize } from 'image-size';
 import { AssetAccessError } from '../types.js';
 import { inspectSvg, type SvgInfo } from './svg.js';
+import { readRasterDimensions, type RasterMime } from './raster-dimensions.js';
 
-export type RasterMime = 'image/png' | 'image/jpeg' | 'image/gif' | 'image/webp';
+export type { RasterMime } from './raster-dimensions.js';
 export type ImageInfo = { mime: RasterMime | 'image/svg+xml'; width?: number; height?: number; isSvg: boolean };
 
 function invalid(message: string): never {
@@ -51,17 +51,10 @@ export function inspectRaster(bytes: Uint8Array, declaredMime?: string): { mime:
   const mime = detectRasterMime(bytes);
   if (declaredMime && declaredMime !== mime) invalid('Image data MIME does not match its file format.');
   inspectContainer(bytes, mime);
-  let width: number | undefined;
-  let height: number | undefined;
-  try {
-    const dimensions = imageSize(bytes);
-    width = dimensions.width;
-    height = dimensions.height;
-  } catch {
-    invalid('Image dimensions could not be read.');
-  }
-  if (!width || !height || !Number.isSafeInteger(width) || !Number.isSafeInteger(height)) invalid('Image dimensions are invalid.');
-  return { mime, width: width!, height: height! };
+  const dimensions = readRasterDimensions(bytes, mime);
+  if (!dimensions) invalid('Image dimensions could not be read.');
+  if (!dimensions.width || !dimensions.height) invalid('Image dimensions are invalid.');
+  return { mime, ...dimensions };
 }
 
 export function inspectImage(bytes: Uint8Array, expectedMime?: string): ImageInfo {

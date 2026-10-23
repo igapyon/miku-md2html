@@ -1,7 +1,7 @@
 import type { Element, Root } from 'hast';
-import { visit } from 'unist-util-visit';
 import { classifyImageSource, type ImageSource } from '../assets/uri.js';
 import type { AssetResolver } from '../types.js';
+import { visitTree } from './tree.js';
 
 type ReferenceTrackingResolver = AssetResolver & {
   recordReference?: (decodedRelativePath: string) => void;
@@ -11,7 +11,7 @@ type ReferenceTrackingResolver = AssetResolver & {
 export function recordLocalImageReferences(tree: Root, assets: AssetResolver | undefined): void {
   if (!assets) return;
   const tracker = assets as ReferenceTrackingResolver;
-  visit(tree, 'element', (node: Element) => {
+  visitTree<Element>(tree, 'element', (node) => {
     if (node.tagName !== 'img' || typeof node.properties.src !== 'string') return;
     if (/^data:/i.test(node.properties.src.trim())) return;
     let source: ImageSource;

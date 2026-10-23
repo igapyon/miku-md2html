@@ -49,6 +49,23 @@ This repository does not provide an Agent Skill. Product-specific Agent Skill pa
 - `package.json`, both package-lock version fields, the runtime version, current CLI examples, and current-version documentation are aligned at `0.3.5`.
 - `npm test` passed (9 files, 103 tests); `npm run smoke:all` passed and staged exactly three release assets for `0.3.5`. The changes remain unstaged and uncommitted.
 
+## 2026-10-23 minor increment to 0.4.0
+
+- The miku-scm SemVer minor preflight validated `0.3.5` → `0.4.0` on `devel-tiga1023wdh`.
+- `package.json`, both package-lock version fields, the runtime version, current CLI examples, and current-version documentation are aligned at `0.4.0`.
+- `npm run build` passed. Release staging derives the CLI, runtime, and source archive filenames from the package version, so their `0.4.0` names are `miku-md2html-0.4.0.mjs`, `miku-md2html-runtime-0.4.0.mjs`, and `miku-md2html-sources-0.4.0.tgz`. Existing local `release-assets/` output was left untouched.
+
+## 2026-10-23–24 runtime dependency reduction (GitHub Issue #5)
+
+- The miku-scm Issue body asks to eliminate runtime dependencies where practical while preserving the conversion and safety contracts. The installed `igapyon-miku-soft-developer` reference was checked on 2026-10-23; source checkout commit `eb05527`; workflow: existing Node application maintenance.
+- Removed `image-size` by adding bounded dimension readers for the four supported raster formats, including Apple CgBI PNGs. Replaced `lowlight` with a local HAST emitter over the existing `highlight.js` engine, and replaced direct `unist-util-visit` use with an iterative in-tree visitor. The 11 imported application libraries remain correctly declared as runtime dependencies and are embedded in the released bundles. The installed dependency graph loses `image-size` and `lowlight`, while `unist-util-visit` remains transitive through the Markdown/HTML pipeline. The lockfile notice inventory has 208 package/version entries.
+- The local HAST emitter uses Highlight.js's emitter hook, so `highlight.js` remains exact-pinned at `11.11.1`; the syntax-highlighting tests must be run when updating that version. The original lowlight-based design and dependency research remain in [syntax-highlighting-plan.md](syntax-highlighting-plan.md), with the follow-up recorded there.
+- The reasons for keeping the runtime dependencies and the build/test tooling inventory are recorded in [runtime-dependencies.md](runtime-dependencies.md).
+- The approved Node 22/24 CI alignment remains a separate follow-up in `TODO.md`; it was deferred because this change is limited to the Issue #5 dependency and behavior scope.
+- `npm run build`, `npm run licenses`, `npm run build:bundle`, `npm run smoke:bundle`, and `npm run smoke:runtime` passed. Focused core, raster, highlighting, image-embedding, and refactoring-contract verification passed (81 tests).
+- After the review fixes, `npm test` passed all 110 tests, including the Apple CgBI PNG regression test. The CLI failure test doubles now complete the normal reference scan before injecting a converter exception, matching the report safety precondition without changing production behavior.
+- Existing `release-assets/` output was left untouched because `npm run release:stage` deletes and recreates that directory; the Issue's CLI/runtime bundle checks were run directly instead.
+
 ## Verification record
 
 Implementation and initial verification are recorded in [completion.md](completion.md). The user's initial browser target is Chrome. Node 22/24 compatibility remains pending because neither version is installed in the current environment; a Node 26 run does not establish those compatibility claims.

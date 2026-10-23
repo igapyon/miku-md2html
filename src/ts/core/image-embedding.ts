@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto';
 import type { Element, Root } from 'hast';
-import { visit } from 'unist-util-visit';
 import type { AssetRecord, AssetResolver, ConversionStats, Diagnostic } from '../types.js';
 import { base64Length, imageWarningDimensions, inspectImage, type ImageInfo } from '../assets/image.js';
 import { classifyImageSource, type ImageSource } from '../assets/uri.js';
 import type { SvgInfo } from '../assets/svg.js';
 import { addDiagnostic, mapAssetError } from './diagnostics.js';
 import { getSource } from './hast-utils.js';
+import { visitTree } from './tree.js';
 
 const warningImageBytes = 5 * 1_048_576;
 const acceptedMimes = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml']);
@@ -156,7 +156,7 @@ export function createImageEmbeddingSession(
     },
     rebindPendingNodes(tree) {
       const pendingByPlaceholder = new Map(pendingLocal.map((pending) => [pending.placeholder, pending]));
-      visit(tree, 'element', (node: Element) => {
+      visitTree<Element>(tree, 'element', (node) => {
         if (node.tagName !== 'img' || typeof node.properties.src !== 'string') return;
         const prefix = 'data:image/svg+xml;base64,';
         if (!node.properties.src.startsWith(prefix)) return;

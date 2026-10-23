@@ -5,7 +5,7 @@
 ## Use
 
 ```sh
-node miku-md2html-0.3.5.mjs ./guide.md --out ./out/guide.html
+node miku-md2html-0.4.0.mjs ./guide.md --out ./out/guide.html
 ```
 
 When a GitHub Release for the exact `v<package version>` tag is published, the [release workflow](.github/workflows/release-cli-runtime-bundles.yml) builds and attaches the versioned CLI, import runtime, and source archive. Until a release is published, install dependencies and run the source-tree CLI:
@@ -17,12 +17,14 @@ npm run cli -- --help
 npm run cli -- --version
 ```
 
+The released CLI and import runtime are self-contained Node.js bundles. Their external JavaScript libraries are embedded, so running a release bundle does not require an npm installation.
+
 The CLI creates missing output directories. It refuses existing destinations unless `--force` is set. Even with `--force`, symlinks, directories, special files, and paths that collide with the input or an embedded image are refused.
 
 Use `--asset-root` to allow images outside the Markdown file's directory. Relative image paths are still resolved from the Markdown file's directory:
 
 ```sh
-node miku-md2html-0.3.5.mjs ./docs/guide.md --out ./out/guide.html --asset-root ./
+node miku-md2html-0.4.0.mjs ./docs/guide.md --out ./out/guide.html --asset-root ./
 ```
 
 `--report-json result.json` writes a versioned JSON report. Success writes a one-line summary to stdout; warnings and errors go to stderr. Exit codes are 0 for success, 1 for conversion or file failures, 2 for usage errors, and 3 for unexpected internal errors.

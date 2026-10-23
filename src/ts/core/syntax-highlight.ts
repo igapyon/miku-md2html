@@ -1,5 +1,5 @@
 import type { Code, Root as MdastRoot } from 'mdast';
-import { createLowlight } from 'lowlight';
+import HighlightJs from 'highlight.js/lib/core';
 import bash from 'highlight.js/lib/languages/bash';
 import css from 'highlight.js/lib/languages/css';
 import diff from 'highlight.js/lib/languages/diff';
@@ -14,14 +14,28 @@ import xml from 'highlight.js/lib/languages/xml';
 import yaml from 'highlight.js/lib/languages/yaml';
 import type { Element, ElementContent, Root as HastRoot, RootContent } from 'hast';
 import type { Position } from 'unist';
-import { visit } from 'unist-util-visit';
 import { addDiagnostic, sourcePosition } from './diagnostics.js';
+import { visitTree } from './tree.js';
+import { HighlightHastEmitter } from './highlight-hast-emitter.js';
 import { resolveCodeLanguage, type GrammarId, type LanguageId } from './code-languages.js';
 import type { Diagnostic } from '../types.js';
 
 const maxBlockBytes = 256 * 1024;
 const maxDocumentBytes = 1024 * 1024;
-const lowlight = createLowlight({ bash, css, diff, java, javascript, json, markdown, powershell, python, typescript, xml, yaml });
+const highlighter = HighlightJs.newInstance();
+highlighter.registerLanguage('bash', bash);
+highlighter.registerLanguage('css', css);
+highlighter.registerLanguage('diff', diff);
+highlighter.registerLanguage('java', java);
+highlighter.registerLanguage('javascript', javascript);
+highlighter.registerLanguage('json', json);
+highlighter.registerLanguage('markdown', markdown);
+highlighter.registerLanguage('powershell', powershell);
+highlighter.registerLanguage('python', python);
+highlighter.registerLanguage('typescript', typescript);
+highlighter.registerLanguage('xml', xml);
+highlighter.registerLanguage('yaml', yaml);
+highlighter.configure({ __emitter: HighlightHastEmitter, classPrefix: 'hljs-' });
 
 export type CodeBlockSource = {
   language: LanguageId;
@@ -34,7 +48,11 @@ export type CodeBlockSource = {
 
 export type SyntaxTokenizer = (grammar: GrammarId, text: string) => HastRoot;
 
-const tokenize: SyntaxTokenizer = (grammar, text) => lowlight.highlight(grammar, text);
+const tokenize: SyntaxTokenizer = (grammar, text) => {
+  const result = highlighter.highlight(text, { language: grammar, ignoreIllegals: true });
+  if (result.errorRaised) throw new Error('Could not highlight code.');
+  return (result._emitter as HighlightHastEmitter).root;
+};
 
 function positionKey(position: Position | undefined): string | undefined {
   const start = position?.start.offset;
@@ -49,7 +67,7 @@ function renderedCodeText(value: string): string {
 
 export function collectCodeBlockSources(tree: MdastRoot): ReadonlyMap<string, CodeBlockSource> {
   const sources = new Map<string, CodeBlockSource>();
-  visit(tree, 'code', (node: Code) => {
+  visitTree<Code>(tree, 'code', (node) => {
     const resolved = resolveCodeLanguage(node.lang);
     const key = positionKey(node.position);
     if (resolved && key && node.position?.start.offset !== undefined && node.position.end.offset !== undefined) {
