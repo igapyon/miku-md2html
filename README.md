@@ -5,7 +5,7 @@
 ## Use
 
 ```sh
-node miku-md2html-0.3.2.mjs ./guide.md --out ./out/guide.html
+node miku-md2html-0.3.5.mjs ./guide.md --out ./out/guide.html
 ```
 
 When a GitHub Release for the exact `v<package version>` tag is published, the [release workflow](.github/workflows/release-cli-runtime-bundles.yml) builds and attaches the versioned CLI, import runtime, and source archive. Until a release is published, install dependencies and run the source-tree CLI:
@@ -22,7 +22,7 @@ The CLI creates missing output directories. It refuses existing destinations unl
 Use `--asset-root` to allow images outside the Markdown file's directory. Relative image paths are still resolved from the Markdown file's directory:
 
 ```sh
-node miku-md2html-0.3.2.mjs ./docs/guide.md --out ./out/guide.html --asset-root ./
+node miku-md2html-0.3.5.mjs ./docs/guide.md --out ./out/guide.html --asset-root ./
 ```
 
 `--report-json result.json` writes a versioned JSON report. Success writes a one-line summary to stdout; warnings and errors go to stderr. Exit codes are 0 for success, 1 for conversion or file failures, 2 for usage errors, and 3 for unexpected internal errors.
@@ -87,6 +87,8 @@ The runtime does not access the filesystem unless the caller supplies an `AssetR
 ## Development
 
 Requires Node.js 22 or newer. The package declares Node 22 as its minimum; the initial bundle target is Node 22.
+
+This repository does not provide its own Agent Skill. Product-specific Agent Skill packaging belongs to the companion project `miku-md2formats-skills`.
 
 ```sh
 npm install

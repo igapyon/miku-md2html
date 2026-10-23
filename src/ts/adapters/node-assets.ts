@@ -22,6 +22,8 @@ export class NodeAssetResolver implements AssetResolver {
   readonly root: string;
   readonly base: string;
   private readonly records = new Map<string, RecordedFile>();
+  private readonly referencedPaths = new Set<string>();
+  private referenceScanComplete = false;
 
   private constructor(root: string, base: string) {
     this.root = root;
@@ -45,6 +47,7 @@ export class NodeAssetResolver implements AssetResolver {
 
   async describe(decodedRelativePath: string): Promise<AssetInfo> {
     const candidate = path.resolve(this.base, decodedRelativePath);
+    this.recordReference(decodedRelativePath);
     if (!isWithin(this.root, candidate)) {
       throw new AssetAccessError('E_ASSET_OUTSIDE_ROOT', `Image asset resolves outside the configured asset root: ${decodedRelativePath}`);
     }
@@ -52,6 +55,7 @@ export class NodeAssetResolver implements AssetResolver {
     let fileStats: Awaited<ReturnType<typeof stat>>;
     try {
       resolved = await realpath(candidate);
+      this.referencedPaths.add(resolved);
       fileStats = await stat(resolved);
     } catch (error) {
       const code = (error as NodeJS.ErrnoException).code;
@@ -127,5 +131,25 @@ export class NodeAssetResolver implements AssetResolver {
 
   getAssetPaths(): string[] {
     return [...new Set([...this.records.values()].map((record) => record.id))];
+  }
+
+  getReferencedPaths(): string[] {
+    return [...this.referencedPaths];
+  }
+
+  recordReference(decodedRelativePath: string): void {
+    this.referencedPaths.add(path.resolve(this.base, decodedRelativePath));
+  }
+
+  completeReferenceScan(): void {
+    this.referenceScanComplete = true;
+  }
+
+  isReferenceScanComplete(): boolean {
+    return this.referenceScanComplete;
+  }
+
+  getAssetIdentities(): Array<{ dev: number; ino: number }> {
+    return [...this.records.values()].map(({ dev, ino }) => ({ dev, ino }));
   }
 }

@@ -27,9 +27,6 @@ export function classifyImageSource(value: string): ImageSource {
   if (!decoded || decoded.includes('\\') || decoded.includes('\0') || decoded.startsWith('/') || /^[A-Za-z]:/.test(decoded)) {
     throw new AssetAccessError('E_IMAGE_URI', 'The decoded image path is not a supported relative path.');
   }
-  if (decoded.includes('?') || decoded.includes('#')) {
-    throw new AssetAccessError('E_IMAGE_URI', 'Encode literal question marks and hash characters in image filenames.');
-  }
   return { kind: 'local', path: decoded };
 }
 

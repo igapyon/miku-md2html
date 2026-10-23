@@ -56,7 +56,12 @@ try {
 
   const { stdout: sourceEntries } = await exec('tar', ['-tzf', path.join(releaseDir, sourceAsset)], { maxBuffer: 1_000_000 });
   const sourceFiles = new Set(sourceEntries.split(/\r?\n/).filter(Boolean));
-  for (const required of ['README.md', 'package.json', 'src/ts/index.ts']) {
+  for (const required of [
+    'README.md', 'package.json', 'src/ts/index.ts',
+    'src/ts/core/article-sanitizer.ts', 'src/ts/core/document-structure.ts', 'src/ts/core/hast-utils.ts',
+    'src/ts/core/html-document.ts', 'src/ts/core/image-embedding.ts',
+    'src/ts/cli/convert-file.ts', 'src/ts/cli/markdown-input.ts', 'src/ts/cli/output-files.ts', 'src/ts/cli/reporting.ts',
+  ]) {
     assert.ok(sourceFiles.has(required), `Source archive is missing ${required}.`);
   }
 } finally {

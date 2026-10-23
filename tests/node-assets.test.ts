@@ -1,8 +1,9 @@
-import { mkdtemp, mkdir, writeFile, symlink, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, symlink, rm, realpath } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { NodeAssetResolver } from '../src/ts/adapters/node-assets.js';
+import { convertMarkdownToHtml } from '../src/ts/core/converter.js';
 import { AssetAccessError } from '../src/ts/types.js';
 
 const roots: string[] = [];
@@ -38,5 +39,18 @@ describe('NodeAssetResolver', () => {
     const resolver = await NodeAssetResolver.create(path.join(root, 'guide.md'));
     await expect(resolver.describe('../private.txt')).rejects.toMatchObject({ code: 'E_ASSET_OUTSIDE_ROOT' });
     await expect(resolver.describe('link.txt')).rejects.toMatchObject({ code: 'E_ASSET_OUTSIDE_ROOT' });
+  });
+
+  it('loads a local image whose filename contains an encoded hash', async () => {
+    const root = await tempRoot();
+    const input = path.join(root, 'guide.md');
+    const image = path.join(root, 'a#b.png');
+    const bytes = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Z2q0AAAAASUVORK5CYII=', 'base64');
+    await writeFile(input, '# Guide');
+    await writeFile(image, bytes);
+    const resolver = await NodeAssetResolver.create(input);
+    const result = await convertMarkdownToHtml({ markdown: '![hash](a%23b.png)', inputName: 'guide.md', assets: resolver });
+    expect(result.success).toBe(true);
+    expect(resolver.getAssetPaths()).toEqual([await realpath(image)]);
   });
 });
