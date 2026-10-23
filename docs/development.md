@@ -23,6 +23,32 @@ The detailed product requirements were prepared in the daybook workspace before 
 
 The initial implementation did not include GitHub Actions or Release publication. A Release asset workflow is now documented below; publishing a Release, registry publication, push, and upload remain human-operated GitHub or registry actions.
 
+## Internal module boundaries
+
+`core/converter.ts` owns the conversion stage order and request/result assembly. `core/article-sanitizer.ts` owns article HTML policy, `core/image-embedding.ts` owns per-conversion image state, and `core/document-structure.ts` / `core/html-document.ts` own heading/fragment processing and final document rendering. The CLI entry point remains in `cli/main.ts`; file input, conversion orchestration, output publication, and reporting are split across `markdown-input.ts`, `convert-file.ts`, `output-files.ts`, and `reporting.ts`. These internal modules do not add runtime exports.
+
+This repository does not provide an Agent Skill. Product-specific Agent Skill packaging belongs to `miku-md2formats-skills`.
+
+## 2026-10-23 core and CLI refactoring
+
+- Baseline on Node.js `v26.12.0` / npm `11.20.0`: `npm test` passed with 75 tests and `npm run smoke:all` passed.
+- Split heading/document rendering, image embedding state, sanitizer policy, CLI input, output publication, conversion orchestration, and reporting into internal modules. The runtime export surface and version remain unchanged.
+- Fixed exact-cap preflight for local images, percent-encoded `#` / `?` image filenames, and CLI/report exit-code classification. Added deterministic tests for output stage/commit failures and no-force destination races.
+- Final verification: `npm test` passed (9 files, 97 tests); `npm run smoke:all` passed and staged exactly three release assets for `0.3.3`.
+- Node 22/24 and the remaining browser, warning-threshold, and license checks are still unverified; see [TODO](../TODO.md).
+
+## 2026-10-23 version increment
+
+- The miku-scm SemVer patch preflight validated `0.3.3` → `0.3.4` on `devel-tiga1023iab`.
+- `package.json`, both package-lock version fields, the runtime version, current CLI examples, and current-version documentation are aligned at `0.3.4`.
+- `npm run smoke:all` passed and staged exactly three release assets for `0.3.4`. The changes remain unstaged and uncommitted.
+
+## 2026-10-23 patch increment to 0.3.5
+
+- The miku-scm SemVer patch preflight validated `0.3.4` → `0.3.5` on `devel-tiga1023iab`.
+- `package.json`, both package-lock version fields, the runtime version, current CLI examples, and current-version documentation are aligned at `0.3.5`.
+- `npm test` passed (9 files, 103 tests); `npm run smoke:all` passed and staged exactly three release assets for `0.3.5`. The changes remain unstaged and uncommitted.
+
 ## Verification record
 
 Implementation and initial verification are recorded in [completion.md](completion.md). The user's initial browser target is Chrome. Node 22/24 compatibility remains pending because neither version is installed in the current environment; a Node 26 run does not establish those compatibility claims.

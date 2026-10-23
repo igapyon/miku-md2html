@@ -83,9 +83,9 @@ REQ-001: 正本は入力Markdownとその参照画像です。主出力は完全
 
 REQ-002: HTMLだけを別のディレクトリへ移し、file://で開いて、本文・表・コード・SVG・画像と補助操作を利用できます。通常の読み込み・閲覧でHTTP(S)、ローカル隣接ファイル、外部font、CDN、APIへのアクセスを必要としません。外部リンクを利用者がクリックした後の遷移はこの条件から除きます。
 
-REQ-003: 初版は単一のローカルMarkdown入力を扱います。ディレクトリ一括変換、サイト生成、テンプレート言語、任意JS/CSSの取り込み、画像の再圧縮/縮小、PDF生成、ブラウザー版UI、Java版、Skills/MCPは後続候補です。入力にMermaid/数式コードがあれば、初版は通常のコードとして表示します。
+REQ-003: 初版は単一のローカルMarkdown入力を扱います。ディレクトリ一括変換、サイト生成、テンプレート言語、任意JS/CSSの取り込み、画像の再圧縮/縮小、PDF生成、ブラウザー版UI、Java版、MCPは後続候補です。このリポジトリは独自のAgent Skillを提供せず、製品向けAgent Skillの同梱先は `miku-md2formats-skills` とします。入力にMermaid/数式コードがあれば、初版は通常のコードとして表示します。
 
-REQ-004: 初期実装時のpackage version案は0.1.0でした。利用者指定により現在のpackage/runtime versionは0.3.2です。Node.js >=22を対象とし、22と24で動作確認し、配布buildは24を使います。skill既定の>=20からの変更理由は、設計確認時点でNode20がEOLであることです。実装時には公式状況と使用dependencyのengine条件を再確認します。
+REQ-004: 初期実装時のpackage version案は0.1.0でした。利用者指定により0.3.2へ変更され、現在のpackage/runtime versionは0.3.5です。Node.js >=22を対象とし、22と24で動作確認し、配布buildは24を使います。skill既定の>=20からの変更理由は、設計確認時点でNode20がEOLであることです。実装時には公式状況と使用dependencyのengine条件を再確認します。
 
 ## 4. 入力、文字列、front matter
 
@@ -202,7 +202,7 @@ miku-md2html --help
 miku-md2html --version
 ~~~
 
-単体配布後の実行形はnode miku-md2html-0.3.2.mjs input.md --out output.htmlです。これは将来の配布asset名の案であり、現時点で公開済みではありません。
+単体配布後の実行形はnode miku-md2html-0.3.5.mjs input.md --out output.htmlです。これは将来の配布asset名の案であり、現時点で公開済みではありません。
 
 | 引数/option | 契約 |
 | --- | --- |
@@ -303,7 +303,7 @@ REQ-100: --report-jsonはschemaVersion:'1'、tool、success、exitCode、input�
 ~~~json
 {
   "schemaVersion": "1",
-  "tool": { "name": "miku-md2html", "version": "0.3.2" },
+  "tool": { "name": "miku-md2html", "version": "0.3.5" },
   "success": true,
   "exitCode": 0,
   "input": { "path": "input.md", "bytes": 128 },

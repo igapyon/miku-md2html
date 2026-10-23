@@ -1,4 +1,5 @@
 import type { Diagnostic, SourcePosition } from '../types.js';
+import { AssetAccessError } from '../types.js';
 
 export function stableDiagnostics(items: Diagnostic[]): Diagnostic[] {
   return [...items].sort((a, b) => {
@@ -42,4 +43,12 @@ export function addDiagnostic(
 
 export function hasErrors(diagnostics: Diagnostic[]): boolean {
   return diagnostics.some((item) => item.severity === 'error');
+}
+
+export function mapAssetError(error: unknown, diagnostics: Diagnostic[], source: Diagnostic['source']): void {
+  if (error instanceof AssetAccessError) {
+    addDiagnostic(diagnostics, 'error', error.code, error.message, source);
+    return;
+  }
+  throw error;
 }
