@@ -4,7 +4,7 @@ Date: 2026-10-22
 
 ## Implemented
 
-The initial Node implementation is in `src/ts/`. It provides a filesystem-free conversion core, a Node asset resolver, and a CLI with staged output and optional JSON reports. It renders CommonMark/GFM, front matter, headings and footnotes; sanitizes author HTML; validates SVG and its CSS; embeds local raster images, SVG files, data URLs, and inline SVG in one self-contained HTML document. Editable viewer CSS/JavaScript are embedded during bundle generation. The repository also contains API/CLI/development documentation, a generated license inventory with available full license texts, and CLI/runtime/source bundle builders. The initial package/runtime implementation was `0.3.0`. A later syntax-highlighting milestone reached `0.3.2`; the current version is `0.3.5`.
+The initial Node implementation is in `src/ts/`. It provides a filesystem-free conversion core, a Node asset resolver, and a CLI with staged output and optional JSON reports. It renders CommonMark/GFM, front matter, headings and footnotes; sanitizes author HTML; validates SVG and its CSS; embeds local raster images, SVG files, data URLs, and inline SVG in one self-contained HTML document. Editable viewer CSS/JavaScript are embedded during bundle generation. The repository also contains API/CLI/development documentation, a generated license inventory with available full license texts, and CLI/runtime/source bundle builders. The initial package/runtime implementation was `0.3.0`. A later syntax-highlighting milestone reached `0.3.2`; the current version is `0.4.0`.
 
 Initial product choices in the implementation specification remain defaults, not individually user-confirmed limits. The 5 MiB image warning, 20 MiB output warning, and 100 MiB output cap were not changed after the measurements below; these measurements do not establish browser limits or performance guarantees.
 
@@ -55,7 +55,7 @@ These are single-run local measurements, not a benchmark series. The repeated-im
 
 Date: 2026-10-23. The feature plan and acceptance matrix are in [syntax-highlighting-plan.md](syntax-highlighting-plan.md). The implementation adds conversion-time highlighting for 13 language families using 12 explicit grammars, a fixed language alias map, safe token span reconstruction after sanitization, and embedded light/dark/print CSS. Unknown or unsupported languages remain plain. Per-block and per-document highlighter input caps are 256 KiB and 1 MiB.
 
-The runtime dependencies are exact-pinned to `lowlight@3.3.0` and `highlight.js@11.11.1`; dev dependencies include `@types/mdast@4.0.4` and `hast-util-from-html@2.0.3`. `npm audit` found 0 vulnerabilities. `npm run build:bundle` regenerated third-party notices for 210 locked package/version entries. Commit `34141b4` records the implementation and version increment from `0.3.1` to `0.3.2` together.
+The original runtime implementation exact-pinned `lowlight@3.3.0` and `highlight.js@11.11.1`; a later dependency-reduction follow-up replaced lowlight with a local HAST emitter. Dev dependencies include `@types/mdast@4.0.4` and `hast-util-from-html@2.0.3`. `npm audit` found 0 vulnerabilities at initial addition. `npm run build:bundle` regenerated third-party notices for 210 locked package/version entries. Commit `34141b4` records the original implementation and version increment from `0.3.1` to `0.3.2` together.
 
 ## Syntax highlighting verification
 

@@ -501,3 +501,7 @@ shared skillは継続適用中のigapyon-miku-soft-developer（10-node-app-workf
 - `npm test`は最終で75 tests、`npm run smoke:all`はCLI/runtime bundleのrepo外smoke、release stagingとrelease asset smokeを含めて成功した。
 - Browser UIを操作するbrowser surfaceがこのsessionでavailableでなく、Chromeのlight/dark/JS無効/320px/print/network確認は未実施。Node 22/24 executableはPATH上になく未検証であり、Node 26の結果で代用しない。
 - baselineの変換後HTMLは`workplace/syntax-highlighting-before.html`、色付け版は`workplace/syntax-highlighting.html`に保存した（両方ともignore対象）。未検証のChrome・Node版、その他の残件は`docs/completion.md`とTODOで扱う。
+
+## 13. Issue #5 dependency-reduction follow-up (2026-10-24)
+
+初期実装で使用した`lowlight`を外し、`src/ts/core/highlight-hast-emitter.ts`でHighlight.jsのscope eventからHAST token treeを直接構築する。HTML文字列の生成・再解析は行わず、既存のclass検証と本文一致確認を維持する。emitter hookはHighlight.jsのprivate APIなので、`highlight.js@11.11.1`をexact pinし、更新時には`tests/syntax-highlight.test.ts`を含む関連suiteを実行する。依存理由の現行一覧は[docs/runtime-dependencies.md](runtime-dependencies.md)を参照。

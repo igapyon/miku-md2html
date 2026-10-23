@@ -1,6 +1,6 @@
 # Third-party notices
 
-This inventory is generated from package-lock.json (210 locked package/version entries). It covers runtime, build, and test dependencies. License texts found in installed package distributions are included below, deduplicated by SHA-256. 52 optional platform package entries have no installed license file in this build environment; their declared identifiers are in the inventory. Matching license texts are included from installed packages with the same declared identifier.
+This inventory is generated from package-lock.json (208 locked package/version entries). It covers runtime, build, and test dependencies. License texts found in installed package distributions are included below, deduplicated by SHA-256. 52 optional platform package entries have no installed license file in this build environment; their declared identifiers are in the inventory. Matching license texts are included from installed packages with the same declared identifier.
 
 | Package | Version | License identifier |
 | --- | --- | --- |
@@ -105,7 +105,6 @@ This inventory is generated from package-lock.json (210 locked package/version e
 | hastscript | 9.0.1 | MIT |
 | highlight.js | 11.11.1 | BSD-3-Clause |
 | html-void-elements | 3.0.0 | MIT |
-| image-size | 2.0.4 | MIT |
 | is-plain-obj | 4.1.0 | MIT |
 | lightningcss | 1.33.0 | MPL-2.0 |
 | lightningcss-android-arm64 | 1.33.0 | MPL-2.0 |
@@ -120,7 +119,6 @@ This inventory is generated from package-lock.json (210 locked package/version e
 | lightningcss-win32-arm64-msvc | 1.33.0 | MPL-2.0 |
 | lightningcss-win32-x64-msvc | 1.33.0 | MPL-2.0 |
 | longest-streak | 3.1.0 | MIT |
-| lowlight | 3.3.0 | MIT |
 | magic-string | 0.30.21 | MIT |
 | markdown-table | 3.0.4 | MIT |
 | mdast-util-find-and-replace | 3.0.3 | MIT |
@@ -1226,22 +1224,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-```
-
-### SHA-256 69fc4e74bce4a2823204da73e625b4eeed4812b2386f21164e8ddb0497619759
-
-Source package files: image-size@2.0.4 (LICENSE)
-
-```text
-The MIT License (MIT)
-
-Copyright © 2013-Present Aditya Yadav, http://netroy.in
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
 ### SHA-256 8885adee5b78b990348487962651590b68873e9843cf377a8f7312080a15db57
@@ -5219,7 +5201,7 @@ SOFTWARE.
 
 ### SHA-256 ea559213e0e927a249bd60f4f6a27d1a272fb5d38d2babbd723099c66a17c5af
 
-Source package files: decode-named-character-reference@1.3.0 (license), hast-util-from-parse5@8.0.3 (license), hast-util-raw@9.1.0 (license), hast-util-sanitize@5.0.2 (license), hast-util-to-html@9.0.5 (license), hast-util-to-parse5@8.0.1 (license), hastscript@9.0.1 (license), lowlight@3.3.0 (license), markdown-table@3.0.4 (license), mdast-util-find-and-replace@3.0.3 (license), mdast-util-from-markdown@2.1.0 (license), mdast-util-gfm@3.1.0 (license), mdast-util-gfm-footnote@2.1.0 (license), mdast-util-gfm-strikethrough@2.0.1 (license), mdast-util-to-markdown@2.2.0 (license), micromark@4.0.3 (license), micromark-core-commonmark@2.0.4 (license), micromark-extension-gfm-table@2.1.2 (license), micromark-factory-destination@2.0.1 (license), micromark-factory-label@2.0.1 (license), micromark-factory-space@2.1.0 (license), micromark-factory-title@2.0.1 (license), micromark-factory-whitespace@2.0.1 (license), micromark-util-character@2.1.1 (license), micromark-util-chunked@2.0.1 (license), micromark-util-classify-character@2.0.1 (license), micromark-util-combine-extensions@2.0.1 (license), micromark-util-decode-numeric-character-reference@2.0.2 (license), micromark-util-decode-string@2.0.1 (license), micromark-util-edit-map@1.0.0 (license), micromark-util-encode@2.0.1 (license), micromark-util-html-tag-name@2.0.1 (license), micromark-util-normalize-identifier@2.0.1 (license), micromark-util-resolve-all@2.0.1 (license), micromark-util-sanitize-uri@2.0.1 (license), micromark-util-subtokenize@2.1.0 (license), micromark-util-symbol@2.0.1 (license), micromark-util-types@2.0.3 (license), remark-gfm@4.0.1 (license), remark-rehype@11.1.2 (license), vfile-message@4.0.3 (license)
+Source package files: decode-named-character-reference@1.3.0 (license), hast-util-from-parse5@8.0.3 (license), hast-util-raw@9.1.0 (license), hast-util-sanitize@5.0.2 (license), hast-util-to-html@9.0.5 (license), hast-util-to-parse5@8.0.1 (license), hastscript@9.0.1 (license), markdown-table@3.0.4 (license), mdast-util-find-and-replace@3.0.3 (license), mdast-util-from-markdown@2.1.0 (license), mdast-util-gfm@3.1.0 (license), mdast-util-gfm-footnote@2.1.0 (license), mdast-util-gfm-strikethrough@2.0.1 (license), mdast-util-to-markdown@2.2.0 (license), micromark@4.0.3 (license), micromark-core-commonmark@2.0.4 (license), micromark-extension-gfm-table@2.1.2 (license), micromark-factory-destination@2.0.1 (license), micromark-factory-label@2.0.1 (license), micromark-factory-space@2.1.0 (license), micromark-factory-title@2.0.1 (license), micromark-factory-whitespace@2.0.1 (license), micromark-util-character@2.1.1 (license), micromark-util-chunked@2.0.1 (license), micromark-util-classify-character@2.0.1 (license), micromark-util-combine-extensions@2.0.1 (license), micromark-util-decode-numeric-character-reference@2.0.2 (license), micromark-util-decode-string@2.0.1 (license), micromark-util-edit-map@1.0.0 (license), micromark-util-encode@2.0.1 (license), micromark-util-html-tag-name@2.0.1 (license), micromark-util-normalize-identifier@2.0.1 (license), micromark-util-resolve-all@2.0.1 (license), micromark-util-sanitize-uri@2.0.1 (license), micromark-util-subtokenize@2.1.0 (license), micromark-util-symbol@2.0.1 (license), micromark-util-types@2.0.3 (license), remark-gfm@4.0.1 (license), remark-rehype@11.1.2 (license), vfile-message@4.0.3 (license)
 
 ```text
 (The MIT License)

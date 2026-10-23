@@ -66,7 +66,12 @@ describe('CLI failure classification and partial output state', () => {
     const input = await prepareInput(root);
     const output = path.join(root, 'out.html');
     const report = path.join(root, 'report.json');
-    const result = await run(options(input, output, report), { convert: async () => { throw failure; } });
+    const result = await run(options(input, output, report), {
+      convert: async (request) => {
+        await convertMarkdownToHtml(request);
+        throw failure;
+      },
+    });
 
     expect(result.exitCode).toBe(3);
     expect(result.stderr).toContain('E_INTERNAL');
@@ -217,7 +222,10 @@ describe('CLI failure classification and partial output state', () => {
     const stage = vi.fn(async () => { throw systemError('EACCES'); });
     const operations: OutputFileOperations = { ...defaultOutputFileOperations, stage };
     const result = await run(options(input, output, report), {
-      convert: async () => { throw new AssetAccessError('E_IMAGE_INVALID', 'Invalid image.'); },
+      convert: async (request) => {
+        await convertMarkdownToHtml(request);
+        throw new AssetAccessError('E_IMAGE_INVALID', 'Invalid image.');
+      },
       outputFiles: operations,
     });
     expect(result.exitCode).toBe(1);

@@ -1,15 +1,15 @@
 import type { Element, Root } from 'hast';
-import { visit } from 'unist-util-visit';
 import type { Diagnostic } from '../types.js';
 import { addDiagnostic, sourcePosition } from './diagnostics.js';
 import { getSource, plainText } from './hast-utils.js';
 import { slugify, uniqueHeadingIds } from './slug.js';
+import { visitTree } from './tree.js';
 
 export type Heading = { node: Element; level: number; text: string; slug: string; id: string };
 
 export function collectAndAssignHeadings(root: Root): Heading[] {
   const nodes: Element[] = [];
-  visit(root, 'element', (node: Element) => {
+  visitTree<Element>(root, 'element', (node) => {
     if (/^h[1-6]$/.test(node.tagName)) nodes.push(node);
   });
   const slugs = nodes.map((node) => slugify(plainText(node)));
@@ -24,11 +24,11 @@ export function collectAndAssignHeadings(root: Root): Heading[] {
 export function rewriteFragments(root: Root, headings: Heading[], diagnostics: Diagnostic[], lineOffset: number): void {
   const bySlug = new Map<string, string>();
   const ids = new Set<string>(headings.map((heading) => heading.id));
-  visit(root, 'element', (node: Element) => {
+  visitTree<Element>(root, 'element', (node) => {
     if (typeof node.properties.id === 'string' && /^miku-(?:fn|fnref)-/.test(node.properties.id)) ids.add(node.properties.id);
   });
   for (const heading of headings) if (!bySlug.has(heading.slug)) bySlug.set(heading.slug, heading.id);
-  visit(root, 'element', (node: Element) => {
+  visitTree<Element>(root, 'element', (node) => {
     if (node.tagName !== 'a' || typeof node.properties.href !== 'string') return;
     const href = node.properties.href;
     if (!href.startsWith('#')) return;
