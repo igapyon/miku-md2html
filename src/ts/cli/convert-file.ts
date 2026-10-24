@@ -1,8 +1,9 @@
-import { realpath, stat } from 'node:fs/promises';
+import { stat } from 'node:fs/promises';
 import path from 'node:path';
 import type { Writable } from 'node:stream';
 import { convertMarkdownToHtml } from '../core/converter.js';
 import { NodeAssetResolver } from '../adapters/node-assets.js';
+import { isWithin } from '../adapters/node-paths.js';
 import { AssetAccessError, type ConvertResult, type Diagnostic } from '../types.js';
 import type { CliOptions } from './args.js';
 import { inspectMarkdown, readMarkdown } from './markdown-input.js';
@@ -59,9 +60,11 @@ async function failureReportDoesNotOverwriteAsset(
   if (!resolver.isReferenceScanComplete()) return false;
   if (target.exists && resolver.getAssetIdentities().some((asset) => asset.dev === target.dev && asset.ino === target.ino)) return false;
 
+  const safePaths = new Set(resolver.getSafeReferencedPaths());
   for (const assetPath of resolver.getReferencedPaths()) {
     const absolute = path.resolve(assetPath);
-    if (absolute === target.canonicalPath) return false;
+    if (absolute === target.path || absolute === target.canonicalPath) return false;
+    if (!safePaths.has(absolute)) return false;
 
     let canonical: string;
     try {
@@ -69,6 +72,7 @@ async function failureReportDoesNotOverwriteAsset(
     } catch {
       return false;
     }
+    if (!isWithin(resolver.root, canonical)) return false;
     if (canonical === target.canonicalPath) return false;
 
     try {
@@ -145,7 +149,7 @@ export async function runFileConversion(
     inputBytes = input.bytes;
 
     try {
-      resolver = await NodeAssetResolver.create(input.realPath, options.assetRoot);
+      resolver = await NodeAssetResolver.create(input.realPath, options.assetRoot, outputTarget.path);
     } catch (error) {
       throw error instanceof AssetAccessError ? error : new AssetAccessError('E_IMAGE_READ', 'Asset root could not be opened.', { cause: error });
     }
@@ -158,29 +162,60 @@ export async function runFileConversion(
         ...(options.lang ? { lang: options.lang } : {}),
         toc: !options.noToc,
         maxOutputBytes,
+        imageMode: options.imageMode,
       },
     });
     diagnostics.push(...result.diagnostics);
-    for (const assetPath of resolver.getAssetPaths()) {
-      const canonical = await realpath(assetPath).catch((error) => {
-        throw new AssetAccessError('E_ASSET_CHANGED', 'A referenced image changed after conversion.', { cause: error });
-      });
-      if (reportTarget && canonical === reportTarget.canonicalPath) reportCanWrite = false;
-      if (canonical === outputTarget.canonicalPath || (reportTarget && canonical === reportTarget.canonicalPath)) {
+    const safeReferencePaths = new Set(resolver.getSafeReferencedPaths());
+    for (const assetPath of resolver.getReferencedPaths()) {
+      const lexical = path.resolve(assetPath);
+      if (lexical === outputTarget.path || (reportTarget && lexical === reportTarget.path)) {
+        if (reportTarget && lexical === reportTarget.path) reportCanWrite = false;
         throw new AssetAccessError('E_OUTPUT_COLLISION', 'An output path refers to a referenced image asset.');
       }
-      let assetStats: Awaited<ReturnType<typeof stat>>;
+      if (!safeReferencePaths.has(lexical)) continue;
+      const canonical = await canonicalPotentialPath(lexical).catch((error) => {
+        const code = (error as NodeJS.ErrnoException).code;
+        if (code === 'ENOENT' || code === 'ENOTDIR') return lexical;
+        throw new AssetAccessError('E_OUTPUT_COLLISION', 'A referenced image path could not be checked against output paths.', { cause: error });
+      });
+      if (!isWithin(resolver.root, canonical)) {
+        if (!diagnostics.some((item) => item.code === 'W_ASSET_CHANGED')) {
+          diagnostics.push({ severity: 'warning', code: 'W_ASSET_CHANGED', message: 'A referenced image changed after conversion.' });
+        }
+        continue;
+      }
+      if (lexical === outputTarget.canonicalPath || canonical === outputTarget.canonicalPath
+        || (reportTarget && (lexical === reportTarget.canonicalPath || canonical === reportTarget.canonicalPath))) {
+        if (reportTarget && (lexical === reportTarget.canonicalPath || canonical === reportTarget.canonicalPath)) reportCanWrite = false;
+        throw new AssetAccessError('E_OUTPUT_COLLISION', 'An output path refers to a referenced image asset.');
+      }
       try {
-        assetStats = await stat(canonical);
+        const assetStats = await stat(canonical);
+        if (outputTarget.exists && assetStats.dev === outputTarget.dev && assetStats.ino === outputTarget.ino) {
+          throw new AssetAccessError('E_OUTPUT_COLLISION', 'HTML output refers to a referenced image asset.');
+        }
+        if (reportTarget?.exists && assetStats.dev === reportTarget.dev && assetStats.ino === reportTarget.ino) {
+          reportCanWrite = false;
+          throw new AssetAccessError('E_OUTPUT_COLLISION', 'JSON report refers to a referenced image asset.');
+        }
+        const snapshot = resolver.getAssetSnapshot(canonical);
+        if (snapshot && (assetStats.size !== snapshot.byteLength || assetStats.dev !== snapshot.dev || assetStats.ino !== snapshot.ino
+          || assetStats.mtimeMs !== snapshot.mtimeMs || assetStats.ctimeMs !== snapshot.ctimeMs)) {
+          if (!diagnostics.some((item) => item.code === 'W_ASSET_CHANGED')) {
+            diagnostics.push({ severity: 'warning', code: 'W_ASSET_CHANGED', message: 'A referenced image changed after conversion.' });
+          }
+        }
       } catch (error) {
-        throw new AssetAccessError('E_ASSET_CHANGED', 'A referenced image changed after conversion.', { cause: error });
-      }
-      if (outputTarget.exists && assetStats.dev === outputTarget.dev && assetStats.ino === outputTarget.ino) {
-        throw new AssetAccessError('E_OUTPUT_COLLISION', 'HTML output refers to a referenced image asset.');
-      }
-      if (reportTarget?.exists && assetStats.dev === reportTarget.dev && assetStats.ino === reportTarget.ino) {
-        reportCanWrite = false;
-        throw new AssetAccessError('E_OUTPUT_COLLISION', 'JSON report refers to a referenced image asset.');
+        if (error instanceof AssetAccessError) throw error;
+        const code = (error as NodeJS.ErrnoException).code;
+        if (code === 'ENOENT' || code === 'ENOTDIR') {
+          if (!diagnostics.some((item) => item.code === 'W_ASSET_CHANGED')) {
+            diagnostics.push({ severity: 'warning', code: 'W_ASSET_CHANGED', message: 'A referenced image changed after conversion.' });
+          }
+          continue;
+        }
+        throw new AssetAccessError('E_OUTPUT_COLLISION', 'A referenced image path could not be checked against output paths.', { cause: error });
       }
     }
 

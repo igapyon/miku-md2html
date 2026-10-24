@@ -26,17 +26,20 @@ describe('refactoring compatibility contract', () => {
     expect(result).toMatchInlineSnapshot(`
       {
         "diagnostics": [],
-        "htmlSha256": "82f09feadd77dca828356a7ca7ee1022fb6dad2b485f26045a8e30e1f14b102c",
+        "htmlSha256": "4dfd9e25b84295ba507c77ac8cbdbe31fe90ba6fe0349566d081adf8931b1328",
         "metadata": {
           "description": "日本語の説明",
           "lang": "ja-JP",
           "title": "設計メモ",
         },
         "stats": {
+          "embeddedImageOccurrences": 0,
           "embeddedPayloadBytes": 0,
           "headingCount": 3,
-          "htmlBytes": 12010,
+          "htmlBytes": 12031,
           "imageOccurrences": 0,
+          "omittedImageOccurrences": 0,
+          "referencedImageOccurrences": 0,
           "uniqueAssets": 0,
           "uniqueSourceAssetBytes": 0,
         },
@@ -112,16 +115,19 @@ describe('refactoring compatibility contract', () => {
             },
           },
         ],
-        "htmlSha256": "f0e2f2d6c04ff27ee0497c862ab5299657fa89b098b4c09f2b36a0ff9daf6c5b",
+        "htmlSha256": "29eb3ad7c361c3fe6273ed4b036edcfe973602afc7c1371471a7a45911613a38",
         "metadata": {
           "lang": "ja",
           "title": "安全",
         },
         "stats": {
+          "embeddedImageOccurrences": 0,
           "embeddedPayloadBytes": 0,
           "headingCount": 2,
-          "htmlBytes": 12359,
+          "htmlBytes": 12380,
           "imageOccurrences": 0,
+          "omittedImageOccurrences": 0,
+          "referencedImageOccurrences": 0,
           "uniqueAssets": 0,
           "uniqueSourceAssetBytes": 0,
         },
@@ -133,7 +139,7 @@ describe('refactoring compatibility contract', () => {
     const describe = vi.fn(async (decodedRelativePath: string) => ({ id: `shared:${decodedRelativePath}`, label: decodedRelativePath, byteLength: tinyPng.byteLength }));
     const read = vi.fn(async () => tinyPng);
     const assets: AssetResolver = { describe, read };
-    const result = await contract({ markdown: '![one](images/tiny.png)\n\n![two](images/tiny.png)', inputName: 'images.md', assets });
+    const result = await contract({ markdown: '![one](images/tiny.png)\n\n![two](images/tiny.png)', inputName: 'images.md', assets, options: { imageMode: 'embed' } });
     expect(describe).toHaveBeenCalledTimes(1);
     expect(read).toHaveBeenCalledTimes(1);
     expect(result).toMatchInlineSnapshot(`
@@ -145,10 +151,13 @@ describe('refactoring compatibility contract', () => {
           "title": "images",
         },
         "stats": {
+          "embeddedImageOccurrences": 2,
           "embeddedPayloadBytes": 184,
           "headingCount": 0,
           "htmlBytes": 11802,
           "imageOccurrences": 2,
+          "omittedImageOccurrences": 0,
+          "referencedImageOccurrences": 0,
           "uniqueAssets": 1,
           "uniqueSourceAssetBytes": 68,
         },
@@ -164,16 +173,19 @@ describe('refactoring compatibility contract', () => {
     expect(result).toMatchInlineSnapshot(`
       {
         "diagnostics": [],
-        "htmlSha256": "623234da48f4830c16011cf00be56426107491de1df8a9fb5207d5b5c0bb1b80",
+        "htmlSha256": "fd4820413d739d26227d2c329b0fdd55f81a47c713da57028ea4773a8f16651f",
         "metadata": {
           "lang": "ja",
           "title": "Code",
         },
         "stats": {
+          "embeddedImageOccurrences": 0,
           "embeddedPayloadBytes": 0,
           "headingCount": 0,
-          "htmlBytes": 11732,
+          "htmlBytes": 11753,
           "imageOccurrences": 0,
+          "omittedImageOccurrences": 0,
+          "referencedImageOccurrences": 0,
           "uniqueAssets": 0,
           "uniqueSourceAssetBytes": 0,
         },

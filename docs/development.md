@@ -10,7 +10,7 @@
 
 The miku-md2docx reference informed the ESM TypeScript package, product core boundary, CLI adapter, Vitest tests, esbuild CLI/runtime bundles, and local smoke scripts. Its DOCX-specific parser/output architecture was not reused. The local-html-tools reference informed keeping the viewer CSS and JavaScript as editable source assets and embedding them during bundle-time conversion. Markdown images need a separate data-URL path; the existing helper does not perform that work.
 
-The detailed product requirements were prepared in the daybook workspace before implementation. The implementation keeps one HTML output, Node-side Markdown rendering, local image embedding, an allowlist for raw HTML, parsed SVG/CSS checks, a default 100 MiB output cap, and no automatic image resizing. The exact dependency versions are fixed in `package-lock.json`.
+The detailed product requirements were prepared in the daybook workspace before implementation. The implementation keeps one HTML output, Node-side Markdown rendering, local image handling, an allowlist for raw HTML, parsed SVG/CSS checks, a default 100 MiB output cap, and no automatic image resizing. The exact dependency versions are fixed in `package-lock.json`.
 
 ## Build and local workflow
 
@@ -69,6 +69,16 @@ This repository does not provide an Agent Skill. Product-specific Agent Skill pa
 ## Verification record
 
 Implementation and initial verification are recorded in [completion.md](completion.md). The user's initial browser target is Chrome. Node 22/24 compatibility remains pending because neither version is installed in the current environment; a Node 26 run does not establish those compatibility claims.
+
+## 2026-10-24 image reference mode and minor increment
+
+- The miku-scm SemVer minor preflight validated `0.4.0` → `0.5.0` on branch `devel-tiga1024aed` before implementation. The four version fields are aligned: `package.json`, both package-lock version values, and `src/ts/index.ts`.
+- The default `reference` mode validates local raster headers and contents, then emits a relative URL from the HTML location to the original file. `embed` retains the previous raster embedding behavior. SVG files and input data/inline SVG remain embedded in both modes.
+- Added bounded 256-byte prefix reads for files over the fixed 100 MiB reference inspection cap, segment-encoded relative URLs, mode-specific CSP, warning-only handling for expected local image file failures, image occurrence statistics, and report schema 2.
+- The CLI checks output collisions against existing and missing referenced image paths. Missing raster references remain in the HTML when a safe relative URL can be made; missing SVG and out-of-root references are omitted.
+- Focused tests passed (8 files, 60 tests), then `npm test` passed (10 files, 124 tests) on Node `v26.12.0`. `npm run build:bundle`, copied CLI/runtime bundle smoke checks, and a temporary 0.5.0 release-stage plus release-asset smoke check passed. Existing ignored `release-assets/` for 0.3.5 was preserved. Chrome displayed the reference-mode local PNG from `file://`, and displayed embed-mode HTML after it was copied away from the image. JavaScript-disabled, 320px, print, instrumented-network, and Node 22/24 checks remain unverified.
+- The companion `miku-md2formats-skills` repository and installed skill copies were not modified. Their miku-md2html guidance should be updated downstream for the new default, API option, warning behavior, and report schema.
+- The worktree remains unstaged and uncommitted; no tag, push, publication, or final release staging has been performed. The smoke-tested release staging was created under a temporary directory and removed.
 
 ## 2026-10-22 maintenance check
 

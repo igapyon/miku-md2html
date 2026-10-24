@@ -97,6 +97,7 @@ Note[^n].
       markdown: '![one](images/tiny.png)\n\n![two](images/tiny.png)',
       inputName: 'images.md',
       assets,
+      options: { imageMode: 'embed' },
     });
     expect(result.success).toBe(true);
     if (!result.success) return;
@@ -117,7 +118,7 @@ Note[^n].
         async describe(path) { return { id: path, label: path, byteLength: bytes.byteLength }; },
         async read() { return bytes; },
       };
-      return convertMarkdownToHtml({ markdown: '![large](large.png)', inputName: 'dimensions.md', assets });
+      return convertMarkdownToHtml({ markdown: '![large](large.png)', inputName: 'dimensions.md', assets, options: { imageMode: 'embed' } });
     }
 
     const exact = await convert(5_000, 8_000);
@@ -182,7 +183,7 @@ Note[^n].
       markdown: '![large](large.png)',
       inputName: 'large.md',
       assets,
-      options: { maxOutputBytes: 4096 },
+      options: { maxOutputBytes: 4096, imageMode: 'embed' },
     });
     expect(result.success).toBe(false);
     if (!result.success) expect(result.diagnostics.some((item) => item.code === 'E_OUTPUT_TOO_LARGE')).toBe(true);
@@ -211,12 +212,15 @@ Note[^n].
     const invalid = await convertMarkdownToHtml({ markdown: '', inputName: 'x.md', options: { maxOutputBytes: 0 } });
     expect(invalid.success).toBe(false);
     if (!invalid.success) expect(invalid.diagnostics[0]?.code).toBe('E_OPTIONS');
+    const invalidMode = await convertMarkdownToHtml({ markdown: '', inputName: 'x.md', options: { imageMode: 'copy' as 'reference' } });
+    expect(invalidMode.success).toBe(false);
+    if (!invalidMode.success) expect(invalidMode.diagnostics[0]?.code).toBe('E_OPTIONS');
     const assets: AssetResolver = {
       async describe(path) { return { id: path, label: path, byteLength: tinyPng.byteLength }; },
       async read() { throw new AssetAccessError('E_ASSET_CHANGED', 'changed'); },
     };
-    const changed = await convertMarkdownToHtml({ markdown: '![x](x.png)', inputName: 'x.md', assets });
-    expect(changed.success).toBe(false);
-    if (!changed.success) expect(changed.diagnostics[0]?.code).toBe('E_ASSET_CHANGED');
+    const changed = await convertMarkdownToHtml({ markdown: '![x](x.png)', inputName: 'x.md', assets, options: { imageMode: 'embed' } });
+    expect(changed.success).toBe(true);
+    expect(changed.diagnostics.some((item) => item.code === 'W_ASSET_CHANGED')).toBe(true);
   });
 });

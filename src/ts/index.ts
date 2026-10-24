@@ -9,8 +9,9 @@ export type {
   ConvertResult,
   ConversionStats,
   Diagnostic,
+  ImageMode,
   SourcePosition,
 } from './types.js';
 
 export const productName = 'miku-md2html';
-export const version = '0.4.0';
+export const version = '0.5.0';

@@ -1,11 +1,11 @@
 # miku-md2html
 
-`miku-md2html` converts one Markdown file and its local images into one portable HTML file. The generated file contains its CSS, viewer JavaScript, SVG, and images, so it can be moved and opened with `file://` while offline.
+`miku-md2html` converts one Markdown file into an HTML document with embedded CSS, viewer JavaScript, and SVG. Local raster images are referenced from their original paths by default. Use `--image-mode embed` when the HTML must contain raster images too.
 
 ## Use
 
 ```sh
-node miku-md2html-0.4.0.mjs ./guide.md --out ./out/guide.html
+node miku-md2html-0.5.0.mjs ./guide.md --out ./out/guide.html
 ```
 
 When a GitHub Release for the exact `v<package version>` tag is published, the [release workflow](.github/workflows/release-cli-runtime-bundles.yml) builds and attaches the versioned CLI, import runtime, and source archive. Until a release is published, install dependencies and run the source-tree CLI:
@@ -19,13 +19,15 @@ npm run cli -- --version
 
 The released CLI and import runtime are self-contained Node.js bundles. Their external JavaScript libraries are embedded, so running a release bundle does not require an npm installation.
 
-The CLI creates missing output directories. It refuses existing destinations unless `--force` is set. Even with `--force`, symlinks, directories, special files, and paths that collide with the input or an embedded image are refused.
+The CLI creates missing output directories. It refuses existing destinations unless `--force` is set. Even with `--force`, symlinks, directories, special files, and paths that collide with the input or a referenced image are refused.
 
 Use `--asset-root` to allow images outside the Markdown file's directory. Relative image paths are still resolved from the Markdown file's directory:
 
 ```sh
-node miku-md2html-0.4.0.mjs ./docs/guide.md --out ./out/guide.html --asset-root ./
+node miku-md2html-0.5.0.mjs ./docs/guide.md --out ./out/guide.html --asset-root ./
 ```
+
+Image URLs in the HTML are relative to the output file and point to the original image files. Keep those files at the same relative paths when moving or sharing the HTML. The converter does not copy or rewrite image files.
 
 `--report-json result.json` writes a versioned JSON report. Success writes a one-line summary to stdout; warnings and errors go to stderr. Exit codes are 0 for success, 1 for conversion or file failures, 2 for usage errors, and 3 for unexpected internal errors.
 
@@ -61,9 +63,13 @@ Safe display-oriented raw HTML is retained. Event handlers, author styles, forms
 
 ## Images and SVG
 
-Local PNG, JPEG, GIF, WebP, and SVG files are embedded as data URLs. PNG, JPEG, GIF, and WebP bytes are kept unchanged; animated GIFs stay animated. Data URLs and inline SVG are also accepted. The tool does not resize, recompress, fetch remote images, copy an asset directory, or create an HTML file that depends on adjacent assets.
+Local SVG files are validated and embedded as data URLs. Local PNG, JPEG, GIF, and WebP files are checked and referenced from their original paths by default; `--image-mode embed` embeds their original bytes as data URLs. PNG, JPEG, GIF, and WebP bytes are not recompressed, and animated GIFs stay animated. Input data URLs and inline SVG are embedded in either mode. Remote images are rejected.
 
-Images above 5 MiB produce a warning and remain at their original quality. Raster images above 40 million pixels produce a separate warning. HTML above 20 MiB produces a warning. The default final HTML limit is 100 MiB; `--max-output-mib` accepts 1 through 1024. These values are product limits, not browser performance guarantees.
+Missing, unreadable, unsupported, or invalid local image files produce warnings. A safe relative URL is kept for raster image references, including a missing raster that may be supplied later. A missing or unreadable `.svg`, or a path outside `--asset-root`, is omitted from the HTML. These warnings do not fail conversion. Unsafe SVG content, remote URLs, malformed image URLs, and output collisions remain errors.
+
+Default reference mode keeps the HTML smaller but depends on the referenced raster files being available beside it. Embed mode creates a portable HTML file for supported local raster images too. The HTML does not copy or create an asset directory.
+
+Images above 5 MiB produce a warning in either mode. Raster images above 40 million pixels produce a separate warning when dimensions can be checked. In reference mode, non-SVG images over 100 MiB are checked by a bounded header read; supported formats can remain referenced with an inspection warning. HTML above 20 MiB produces a warning. The default final HTML limit is 100 MiB; `--max-output-mib` accepts 1 through 1024. These values are product limits, not browser performance guarantees.
 
 SVG is parsed as XML and its CSS is parsed before embedding. DTDs/entities, scripts, event attributes, `foreignObject`, animation, external references, CSS imports, and nested SVG data URLs are rejected. SVG style elements are supported when their CSS passes the local-reference policy. Unsupported SVG elements or attributes are rejected so the converter does not silently remove drawing content. Some SVG diagrams will therefore need to be simplified or converted to a supported image format first.
 
@@ -84,7 +90,7 @@ if (result.success) {
 }
 ```
 
-The runtime does not access the filesystem unless the caller supplies an `AssetResolver`. The Node CLI uses the included filesystem adapter. See [API reference](docs/api.md) and [CLI reference](docs/cli.md).
+The runtime does not access the filesystem unless the caller supplies an `AssetResolver`. In the default reference mode, the resolver also provides a URL relative to the intended output file; use `imageMode: 'embed'` to embed local raster images. See [API reference](docs/api.md) and [CLI reference](docs/cli.md).
 
 ## Development
 

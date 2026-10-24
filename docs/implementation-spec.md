@@ -79,13 +79,13 @@ sources:
 
 ## 3. 製品境界
 
-REQ-001: 正本は入力Markdownとその参照画像です。主出力は完全なHTML文書1ファイルです。HTMLを編集元としてMarkdownを逆生成する契約は持ちません。
+REQ-001: 正本は入力Markdownとその参照画像です。主出力は完全なHTML文書1ファイルです。HTMLを編集元としてMarkdownを逆生成する契約は持ちません。通常modeはローカルラスターを元pathから参照し、SVGはHTMLへ埋め込みます。全画像を含む単一fileが必要な場合はembed modeを選びます。
 
-REQ-002: HTMLだけを別のディレクトリへ移し、file://で開いて、本文・表・コード・SVG・画像と補助操作を利用できます。通常の読み込み・閲覧でHTTP(S)、ローカル隣接ファイル、外部font、CDN、APIへのアクセスを必要としません。外部リンクを利用者がクリックした後の遷移はこの条件から除きます。
+REQ-002: HTMLをfile://で開いて本文・表・コード・SVGと補助操作を利用できます。reference modeでは元ラスターがHTMLから計算された相対pathに残っていることが条件です。embed modeでは受理した画像を含むHTMLだけを移動できます。通常の読み込み・閲覧でHTTP(S)、外部font、CDN、APIへのアクセスを必要としません。外部リンクを利用者がクリックした後の遷移はこの条件から除きます。
 
 REQ-003: 初版は単一のローカルMarkdown入力を扱います。ディレクトリ一括変換、サイト生成、テンプレート言語、任意JS/CSSの取り込み、画像の再圧縮/縮小、PDF生成、ブラウザー版UI、Java版、MCPは後続候補です。このリポジトリは独自のAgent Skillを提供せず、製品向けAgent Skillの同梱先は `miku-md2formats-skills` とします。入力にMermaid/数式コードがあれば、初版は通常のコードとして表示します。
 
-REQ-004: 初期実装時のpackage version案は0.1.0でした。利用者指定により0.3.2へ変更され、現在のpackage/runtime versionは0.4.0です。Node.js >=22を対象とし、22と24で動作確認し、配布buildは24を使います。skill既定の>=20からの変更理由は、設計確認時点でNode20がEOLであることです。実装時には公式状況と使用dependencyのengine条件を再確認します。
+REQ-004: 初期実装時のpackage version案は0.1.0でした。利用者指定により0.3.2へ変更され、現在のpackage/runtime versionは0.5.0です。Node.js >=22を対象とし、22と24で動作確認し、配布buildは24を使います。skill既定の>=20からの変更理由は、設計確認時点でNode20がEOLであることです。実装時には公式状況と使用dependencyのengine条件を再確認します。
 
 ## 4. 入力、文字列、front matter
 
@@ -143,19 +143,19 @@ REQ-036: SVGの判定はE_SVG_INVALID、E_SVG_UNSAFE、E_SVG_EXTERNAL_RESOURCE�
 
 ## 7. 画像、参照パス、単一HTMLの保証
 
-REQ-040: PNG/JPEG/GIF/WebP/SVGを扱います。PNG等のラスター画像は再エンコードせず、data URLへBase64で格納します。GIFのanimationを勝手に静止画へ変えません。SVGZ、AVIF、BMP、TIFF等はE_IMAGE_FORMATです。拡張子や申告MIMEだけで形式を確定せず、magic/container headerを確認します。既知形式の寸法・明らかな切断を検査しますが、全pixelを復号する完全な破損検査は初版の保証範囲ではありません。
+REQ-040: PNG/JPEG/GIF/WebP/SVGを扱います。reference modeではPNG/JPEG/GIF/WebPを元pathで参照します。embed modeでは再エンコードせず元bytesをdata URLへ格納します。GIFのanimationを勝手に静止画へ変えません。SVGは両modeで安全性を検証して埋め込みます。SVGZ、AVIF、BMP、TIFF等は形式warningとなり、reference modeでは安全な相対URLを残します。拡張子や申告MIMEだけで形式を確定せず、magic/container headerを確認します。既知形式の寸法・明らかな切断を検査しますが、全pixelを復号する完全な破損検査は初版の保証範囲ではありません。
 
-REQ-041: 参照パスはMarkdownファイルの親directoryを基準に解決します。default asset rootもそのdirectoryです。--asset-rootで明示した場合はそのroot内まで読めますが、参照の解決起点は変わりません。親directoryの画像を使う場合は、包含するrootを指定します。
+REQ-041: 入力画像pathはMarkdownファイルの親directoryを基準に解決します。default asset rootもそのdirectoryです。--asset-rootで明示した場合はそのroot内まで検査できますが、参照の解決起点は変わりません。出力HTML内のsrcはHTMLから元画像への相対URLです。親directoryの画像を使う場合は、包含するrootを指定します。
 
 REQ-042: 画像参照は相対URL pathを受理し、一度だけpercent decodeします。space/日本語は通常のMarkdown URL記法を通して扱います。NUL、不正percent encoding、backslash、絶対path、drive/UNC/file URL、query/fragment付きの画像参照は初版ではE_IMAGE_URIです。実ファイル名の#/?は%23/%3Fで指定できます。
 
-REQ-043: Node adapterはrealpath後の包含関係をpath segment単位で確認します。..やsymlinkでasset root外へ出る場合はE_ASSET_OUTSIDE_ROOTです。symlink自体を一律禁止せず、最終実体がroot内の通常ファイルであることを条件とします。単純な文字列prefix比較で包含判定しません。describe時とread時の両方で包含/実体条件を検査し、readはmaxBytesを超えて無制限にbufferへ取り込みません。並行する悪意あるfilesystem変更に対する完全なsandboxをこのconverter単体で保証する仕様ではありません。
+REQ-043: Node adapterはcanonical pathで包含関係をpath segment単位に確認します。..やsymlinkでasset root外へ出る場合はW_ASSET_OUTSIDE_ROOTとしてsrcを省略し、内容を読みません。symlink自体を一律禁止せず、最終実体がroot内の通常ファイルであることを条件とします。単純な文字列prefix比較で包含判定しません。describe時とread時の両方で包含/実体条件を検査し、readはmaxBytesを超えて無制限にbufferへ取り込みません。並行する悪意あるfilesystem変更に対する完全なsandboxをこのconverter単体で保証する仕様ではありません。
 
 REQ-044: http/https、scheme-relative、その他remote画像はE_REMOTE_IMAGEです。ネットワーク取得機能はありません。既存data URLはBase64形式の対応画像MIMEだけを受け入れ、decode後の形式と一致を確認します。空画像、未知MIME、MIME偽装、不正Base64はエラーです。通常リンクと画像のremote方針を混同しません。
 
-REQ-045: 欠落画像はE_IMAGE_NOT_FOUND、読取不能はE_IMAGE_READです。alt textだけを残して成功にはしません。画像の自動縮小、外部参照への切替、asset folder/ZIPの自動生成をしません。
+REQ-045: ローカル画像の欠落、読取不能、非対応形式、検出可能な破損、検査中の変更はwarningです。reference modeでは安全に作れるラスター相対URLを残し、embed modeではsrcを省略します。欠落または読取不能の`.svg`とroot外画像は両modeで省略します。warningだけなら変換を成功できます。SVGの安全性error、remote、不正URL、resolver契約違反、出力衝突はerrorです。画像の自動縮小、asset folder/ZIPの自動生成をしません。
 
-REQ-046: 同一実体は読取/cacheを共有できますが、初版のHTMLは各imgへdata URLを直接入れます。同一画像の複数回出現は出現回数分のpayloadとして容量計算します。JSによるasset registryやBlob URLへの後付けに依存しません。
+REQ-046: 同一実体はread/cacheを共有できます。embed mode、SVG、入力data URLは各imgへdata URLを直接入れ、同一画像の複数回出現は出現回数分のpayloadとして容量計算します。reference modeのラスターは相対srcを保ち、Base64容量へ加算しません。JSによるasset registryやBlob URLへ依存しません。
 
 ## 8. 容量の既定値と評価順
 
@@ -163,7 +163,7 @@ REQ-050: MiBは1,048,576 bytesです。文字数ではなくUTF-8出力bytesで�
 
 | 項目 | 設計上の初期値 | 動作 |
 | --- | --- | --- |
-| 元画像1件の容量 | 5 MiB超 | W_LARGE_IMAGE。元画像を埋め込みます。 |
+| 元画像1件の容量 | 5 MiB超 | W_LARGE_IMAGE。参照または埋め込みを継続します。 |
 | ラスター画像の寸法 | 40,000,000 pixels超 | W_LARGE_IMAGE_DIMENSIONS。容量とは別に記録します。 |
 | 最終HTML容量 | 20 MiB超 | W_LARGE_OUTPUT。生成を継続します。 |
 | 最終HTML上限 | default 100 MiB | E_OUTPUT_TOO_LARGE。--max-output-mibで変更できます。 |
@@ -172,7 +172,7 @@ REQ-050: MiBは1,048,576 bytesです。文字数ではなくUTF-8出力bytesで�
 
 REQ-051: max-output-mibは1以上1024以下の整数です。値を上げても、そのサイズを全環境で処理できる保証にはしません。上限に適合しても実行環境のresource不足があれば失敗し、黙って内容を欠落させません。
 
-REQ-052: ローカル画像はまずstat相当の情報を取り、Base64 payload長4×ceil(bytes/3)を出現回数分見積もります。見積もりには固定HTML/CSS/JSと本文も含めます。明らかに上限を超える巨大画像を全文読取してから判定しません。describe後に実体またはbyteLengthが変わったと分かればE_ASSET_CHANGEDで失敗し、自動再試行を繰り返しません。読取上限へ先に到達した場合はE_OUTPUT_TOO_LARGEにできます。いずれもHTMLをcommitしません。
+REQ-052: embed対象のローカル画像はstat相当の情報からBase64 payload長4×ceil(bytes/3)を出現回数分見積もります。reference対象のラスターはBase64 payloadを見積もりへ加えず、100 MiB以下なら全体形式・寸法・切断を検査します。100 MiBを超える場合は最大256 bytesのprefixで対応形式を識別し、対応ラスターならW_IMAGE_INSPECTION_SKIPPEDを出して参照を継続します。識別不能な巨大fileはsrcを省略します。SVGとembed画像は出力上限でbounded readします。想定される画像file変更はW_ASSET_CHANGEDとし、安定して安全なURLを作れる場合に限りreferenceを継続します。E_OUTPUT_TOO_LARGEは維持します。
 
 REQ-053: 完成HTMLのUTF-8 byte lengthでも必ず再判定します。XML/HTML escapeやmetadataなどによる見積もり差を許容しても、実出力の超過を許容しません。診断JSONの容量はHTML上限に含めません。
 
@@ -190,7 +190,7 @@ REQ-063: UI文字列はlangがja系なら日本語、それ以外は英語です
 
 REQ-064: scriptは固定のviewer補助処理だけです。入力値をscript文字列やevent handlerへ連結せず、本文はAST serializerでescapeし、viewerはtextContent/DOM APIを使います。eval、dynamic import、fetch、外部font/analytics/service workerを使いません。許可されない外部資源参照が最終DOMに残らないことを確認します。
 
-REQ-065: headにはmeta CSPを置きます。default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'sha256-<固定scriptのhash>'; connect-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'を初期方針にします。styleのinline許可は固定themeとSVG内styleのためです。author styleはREQ-032で除去します。固定scriptの正確な出力bytesからbuild時にhashを計算し、実行時に乱数nonceを生成しません。
+REQ-065: headにはmeta CSPを置きます。default-src 'none'; style-src 'unsafe-inline'; script-src 'sha256-<固定scriptのhash>'; connect-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'を共通とし、reference modeはimg-src data: file: 'self'、embed modeはimg-src data:にします。styleのinline許可は固定themeとSVG内styleのためです。author styleはREQ-032で除去します。固定scriptの正確な出力bytesからbuild時にhashを計算し、実行時に乱数nonceを生成しません。
 
 REQ-066: style/script raw-textを途中で閉じる文字列が固定assetに入ってもHTML構造を壊さないbuild処理と検証を用意します。入力由来の内容をこのescapeで安全化できると考えず、本文と固定assetを別経路で組み立てます。
 
@@ -202,7 +202,7 @@ miku-md2html --help
 miku-md2html --version
 ~~~
 
-単体配布後の実行形はnode miku-md2html-0.4.0.mjs input.md --out output.htmlです。これは将来の配布asset名の案であり、現時点で公開済みではありません。
+単体配布後の実行形はnode miku-md2html-0.5.0.mjs input.md --out output.htmlです。これは予定asset名であり、現時点で公開済みではありません。
 
 | 引数/option | 契約 |
 | --- | --- |
@@ -211,6 +211,7 @@ miku-md2html --version
 | --title <text> | titleの最優先値。空白のみはusage error。 |
 | --lang <tag> | html langの最優先値。 |
 | --asset-root <dir> | 読取可能なローカル画像root。defaultは入力の親。 |
+| --image-mode <mode> | default reference。SVG/data URL/inline SVGは常に埋め込み、embedはローカルラスターも埋め込みます。 |
 | --no-toc | 目次を出力しない。 |
 | --max-output-mib <integer> | default 100。REQ-051の範囲。 |
 | --report-json <file> | version付き機械可読レポートを指定fileへ書く。defaultでは作成しない。 |
@@ -264,11 +265,13 @@ declare class AssetAccessError extends Error {
 interface AssetResolver {
   describe(decodedRelativePath: string): Promise<AssetInfo>;
   read(id: string, maxBytes: number): Promise<Uint8Array>;
+  reference?(decodedRelativePath: string): Promise<string>;
+  readPrefix?(id: string, maxBytes: number): Promise<Uint8Array>;
 }
 type ConvertRequest = {
   markdown: string;
   inputName: string;
-  options?: { title?: string; lang?: string; toc?: boolean; maxOutputBytes?: number };
+  options?: { title?: string; lang?: string; toc?: boolean; maxOutputBytes?: number; imageMode?: 'reference' | 'embed' };
   assets?: AssetResolver;
 };
 type ConvertResult = {
@@ -282,6 +285,9 @@ type ConvertResult = {
     uniqueAssets: number;
     uniqueSourceAssetBytes: number;
     embeddedPayloadBytes: number;
+    embeddedImageOccurrences: number;
+    referencedImageOccurrences: number;
+    omittedImageOccurrences: number;
     htmlBytes?: number;
   };
 };
@@ -292,22 +298,22 @@ declare const version: string;
 
 REQ-090: success:trueならhtml必須、error診断なしです。success:falseならhtmlを返しません。公開型はこの条件を表すdiscriminated unionへ具体化できます。failureでmetadataをまだ決定できない場合はtitle=Untitled/lang=jaとし、statsは完了した範囲の値です。未完成のhtmlBytesは省略します。期待されるparse/asset失敗は診断へ正規化し、内部bugまですべて変換失敗に隠しません。inputNameは空でないfilename相当のlogical nameで、slash/backslash/NULを含めません。CLIはbasenameを渡します。coreのmaxOutputBytesは1以上1,073,741,824以下のsafe integer、default104,857,600です。APIの不正request/optionsはE_OPTIONSのfailureで返し、CLI側の引数誤りexit2と区別します。coreでも入力UTF-8 byte lengthの上限を確認します。
 
-REQ-091: Node resolverがbase/root/realpath/通常file/読取制限を担当し、coreがURL分類、対応形式、SVG規則、埋め込み、容量、HTML生成を担当します。resolverのbyteLengthは読取後にも検査します。assets未指定でローカル画像が現れたらE_ASSET_RESOLVER_REQUIREDです。data URL/inline SVGはresolverなしで扱えます。
+REQ-091: Node resolverがbase/root/realpath/通常file/読取制限/HTMLから元画像への相対URLを担当し、coreがURL分類、対応形式、SVG規則、mode分岐、容量、HTML生成を担当します。resolverのbyteLengthは読取後にも検査します。assets未指定でローカル画像が現れたらE_ASSET_RESOLVER_REQUIREDです。reference modeでラスターを処理するresolverにはreference callbackが必要です。embed mode、data URL、inline SVGはreference callbackなしで扱えます。
 
 REQ-092: resolverの想定失敗は公開するAssetAccessErrorのcodeでcoreへ渡します。他の例外を入力errorと決めつけて握りつぶしません。診断のlabelはlogical root-relative名を基本にし、asset bytes、Base64、絶対内部path、stackをcore診断へ不用意に含めません。実装されたerror型のconstructorと公開exportはAPI文書に記載します。AssetInfo.byteLengthは非負のsafe integerです。不正metadataやUint8Array以外のread結果はadapter契約違反の内部errorとして扱います。
 
 ## 13. 機械可読レポート
 
-REQ-100: --report-jsonはschemaVersion:'1'、tool、success、exitCode、input、output、metadata、stats、diagnosticsを持つJSONです。report自体はHTML閲覧の必須ファイルではありません。日時/処理時間は初版の安定schemaへ含めません。
+REQ-100: --report-jsonはschemaVersion:'2'、tool、success、exitCode、input、output（imageModeを含む）、metadata、stats、diagnosticsを持つJSONです。report自体はHTML閲覧の必須ファイルではありません。日時/処理時間は安定schemaへ含めません。
 
 ~~~json
 {
-  "schemaVersion": "1",
-  "tool": { "name": "miku-md2html", "version": "0.4.0" },
+  "schemaVersion": "2",
+  "tool": { "name": "miku-md2html", "version": "0.5.0" },
   "success": true,
   "exitCode": 0,
   "input": { "path": "input.md", "bytes": 128 },
-  "output": { "path": "output.html", "written": true, "bytes": 4096 },
+  "output": { "path": "output.html", "imageMode": "reference", "written": true, "bytes": 4096 },
   "metadata": { "title": "設計メモ", "lang": "ja" },
   "stats": {
     "headingCount": 2,
@@ -315,13 +321,16 @@ REQ-100: --report-jsonはschemaVersion:'1'、tool、success、exitCode、input�
     "uniqueAssets": 1,
     "uniqueSourceAssetBytes": 512,
     "embeddedPayloadBytes": 684,
+    "embeddedImageOccurrences": 1,
+    "referencedImageOccurrences": 0,
+    "omittedImageOccurrences": 0,
     "htmlBytes": 4096
   },
   "diagnostics": []
 }
 ~~~
 
-REQ-101: input/output pathはCLIで指定された表記を基本にします。generated HTMLへそのpathを転記しません。failure時のoutput.bytesは未完成なら省略し、writtenは実際にHTMLをcommitしたかを示します。statsのembeddedPayloadBytesは最終imgのdata URLのBase64 payload部分の出現回数合計です。SVG内に既存のdata rasterがあってもouter SVG payloadとは別に二重加算しません。uniqueAssets/uniqueSourceAssetBytesはresolver.id単位です。data URL/inline SVGはMIMEと内容hashを基に内部idを付け、同じidの元bytesを重複加算しません。別idのassetが同じbytesである場合に、content dedupまで行う契約はありません。inline SVGもassetに数えます。
+REQ-101: input/output pathはCLIで指定された表記を基本にします。generated HTMLへ絶対pathを転記しません。failure時のoutput.bytesは未完成なら省略し、writtenは実際にHTMLをcommitしたかを示します。embeddedImageOccurrences、referencedImageOccurrences、omittedImageOccurrencesの合計はsuccess時にimageOccurrencesと一致します。embeddedPayloadBytesは最終imgのdata URLのBase64 payload部分の出現回数合計です。参照ラスターは加算しません。SVG内に既存のdata rasterがあってもouter SVG payloadとは別に二重加算しません。uniqueAssets/uniqueSourceAssetBytesはresolver.id単位です。data URL/inline SVGはMIMEと内容hashを基に内部idを付け、同じidの元bytesを重複加算しません。別idのassetが同じbytesである場合に、content dedupまで行う契約はありません。inline SVGもassetに数えます。
 
 REQ-102: diagnosticsはsource位置順、同位置はcodeのUTF-16 code unit順で安定化します。位置不明は後ろです。同一理由を何千属性分も繰り返さず、同一node/除去種別をまとめられます。網羅的な全error収集は保証せず、fatal limit時は早期停止できます。
 
@@ -333,10 +342,11 @@ REQ-102: diagnosticsはsource位置順、同位置はcodeのUTF-16 code unit順�
 | E_OPTIONS | error | public core APIのrequest/optionsが契約外 |
 | E_FRONT_MATTER | error | front matter構文/形 |
 | E_IMAGE_URI / E_REMOTE_IMAGE | error | 画像URL契約外/remote |
-| E_ASSET_OUTSIDE_ROOT / E_ASSET_RESOLVER_REQUIRED | error | 読取境界/API adapter不足 |
-| E_IMAGE_NOT_FOUND / E_IMAGE_READ | error | 画像欠落/読取不能 |
-| E_ASSET_CHANGED | error | describe後の実体/サイズ変更を検出 |
-| E_IMAGE_FORMAT / E_IMAGE_INVALID | error | 形式契約外/検出された破損 |
+| E_ASSET_RESOLVER_REQUIRED / E_ASSET_REFERENCE_REQUIRED | error | resolver/API adapter不足 |
+| W_IMAGE_NOT_FOUND / W_IMAGE_READ | warning | ローカル画像の欠落/読取不能 |
+| W_ASSET_OUTSIDE_ROOT / W_ASSET_CHANGED / W_IMAGE_REFERENCE | warning | root範囲外/実体変更/相対URL生成不能 |
+| W_IMAGE_FORMAT / W_IMAGE_INVALID / W_IMAGE_INSPECTION_SKIPPED | warning | ローカル画像の形式/内容/検査上限 |
+| E_IMAGE_FORMAT / E_IMAGE_INVALID | error | 入力data URL等、ローカルfile検証以外の形式/内容契約違反 |
 | E_SVG_INVALID / E_SVG_UNSAFE / E_SVG_EXTERNAL_RESOURCE / E_SVG_UNSUPPORTED | error | SVGの検証失敗 |
 | E_OUTPUT_TOO_LARGE | error | 見積もりまたは実出力が上限超過 |
 | E_OUTPUT_EXISTS / E_OUTPUT_COLLISION / E_OUTPUT_WRITE | error | 出力保護/I/O |
@@ -349,12 +359,12 @@ REQ-102: diagnosticsはsource位置順、同位置はcodeのUTF-16 code unit順�
 
 ## 14. 処理順とmoduleの構成案
 
-1. CLI引数、input/output/report/rootを検証し、help/versionなら即終了します。
+1. CLI引数、input/output/report/root/imageModeを検証し、help/versionなら即終了します。
 2. inputのstat/UTF-8を確認し、front matterとMarkdownをsource位置付きで解析します。fenced codeの言語とsource位置をAST変換前に記録します。
 3. MarkdownをHTML ASTへ変換し、raw HTMLを構文解析します。SVG subtreeを独立資産化し、通常HTMLをsanitizeします。sanitize後、記録済みのMarkdown fenceと位置・本文が一致するcodeだけに安全なtoken spanを付けます。
 4. heading/title/目次/脚注のIDとリンクを確定し、画像参照を収集します。
-5. image resolverのdescribe、root/衝突確認、payload見積もりを行います。明らかな超過で打ち切ります。
-6. 制限付きで画像bytesを読み、画像/SVGを検証し、data URLへ置換します。
+5. modeに従って画像を処理します。SVG/data URL/inline SVGは検証して埋め込み、reference modeのラスターは形式・安全root・相対URLを確認して元fileを参照します。embed modeのラスターは容量を事前見積もりしてから埋め込みます。
+6. 想定されるローカルfile検査失敗はwarningへ変換し、参照または省略を判断します。remote、不正URL、危険SVG、resolver契約違反はerrorです。
 7. 固定theme/viewer資源と本文ASTからHTMLを生成し、正確なUTF-8容量を判定します。
 8. result/reportを作り、CLIがREQ-080以降の規則でfileをcommitします。
 
@@ -413,9 +423,9 @@ REQ-113: .gitignore、workplace/.gitkeep、README、実際の残作業を記すT
 | AC-011 | 脚注複数とbackref、raw id衝突 | 全linkが実在IDへ着き、author idでUIを上書きできない |
 | AC-012 | 入れ子list、task、表alignment、hard/soft break | 構造と表示規則どおり。checkbox disabled |
 | AC-013 | code内のHTML/SVG/閉じscript文字列 | literal表示。生成DOM/scriptを壊さない |
-| AC-014 | Markdown imageとraw HTML img | 同じ埋め込み/失敗規則 |
-| AC-015 | PNG/JPEG/GIF/WebP各1件 | 元bytesがdata URLから復元可能 |
-| AC-016 | 通常SVG、defs/use/gradient/style | vector表示、内部ID参照保持 |
+| AC-014 | Markdown imageとraw HTML img | 同じmode/validation規則 |
+| AC-015 | PNG/JPEG/GIF/WebP各1件 | defaultは相対参照、embed modeは元bytes復元可能 |
+| AC-016 | 通常SVG、defs/use/gradient/style | 両modeでvector埋め込み、内部ID参照保持 |
 | AC-017 | raw inline SVGとfenced SVG | 前者を画像化、後者をcode表示 |
 | AC-018 | SVG script/onload/DOCTYPE/foreignObject | 対応するSVG error、HTML出力なし |
 | AC-019 | SVG CSSの@import/url外部/escapeされたURL | E_SVG_EXTERNAL_RESOURCE等、通信/外部読取なし |
@@ -426,16 +436,16 @@ REQ-113: .gitignore、workplace/.gitkeep、README、実際の残作業を記すT
 | AC-024 | .. / symlinkでroot外、prefix似の別dir | E_ASSET_OUTSIDE_ROOT、内容を読まない |
 | AC-025 | --asset-root拡張、root内symlink | 許可範囲内で解決。解決基準は入力親のまま |
 | AC-026 | remote/protocol-relative画像 | E_REMOTE_IMAGE、network呼出し0 |
-| AC-027 | 欠落画像/読取権限なし | error。altだけで成功扱いにしない |
-| AC-028 | 同じ画像を複数回参照 | 容量は出現回数分。cacheで実読取の共有可 |
+| AC-027 | 欠落画像/読取権限なし | warning。safe raster URL保持、SVG/embedは省略 |
+| AC-028 | 同じ画像を複数回参照 | embed payloadは出現回数分、referenceはsrcを保つ。cacheで実読取共有可 |
 | AC-029 | 5MiB画像/5MiB+1、20MiB HTML/20MiB+1 | 等しい時は当該警告なし、超過だけ警告 |
 | AC-030 | 画素数だけ巨大な圧縮画像 | bytes警告とは別のdimension警告 |
 | AC-031 | 上限ちょうど/上限+1、--max-output-mib変更 | 前者許可、後者失敗。既存HTML保持 |
 | AC-032 | statだけで明らかに上限超の巨大asset | 全bytesを読まず失敗。mock resolverでread未実行を確認 |
-| AC-033 | describe後にasset実体/長さが変わる | E_ASSET_CHANGED。読取limit到達なら容量error可。HTMLは出さない |
+| AC-033 | describe後にasset実体/長さが変わる | W_ASSET_CHANGED。安全な相対URL確認後だけreferenceを継続 |
 | AC-034 | script/style/base/iframe/onclick危険href | 無害化と診断。生成viewerは動作 |
-| AC-035 | outputを画像のない別dirへ移しfile://で開く | 全画像/本文正常、元path不要 |
-| AC-036 | offline + browser全request記録 | 初回file読取を除きhttp(s)/隣接file参照0 |
+| AC-035 | outputを別dirへ移しfile://で開く | referenceは元ラスターの相対配置を維持、embedは元画像不要 |
+| AC-036 | offline + browser全request記録 | http(s) requestなし。referenceは指定画像pathを読む |
 | AC-037 | JS無効 | 本文/画像/目次が読める。無動作のcopyボタンなし |
 | AC-038 | clipboard成功/拒否/未提供 | 正しい成功表示、または選択とmanual copy案内 |
 | AC-039 | viewport 320px/desktop/print | bodyの不必要な横overflowなし。印刷に操作buttonなし |
