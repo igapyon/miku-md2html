@@ -253,7 +253,8 @@ describe('CLI failure classification and partial output state', () => {
     });
 
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain('E_ASSET_CHANGED');
+    expect(result.stderr).toContain('E_OUTPUT_COLLISION');
+    expect(result.stderr).toContain('W_ASSET_CHANGED');
     expect(await readFile(reportImage)).toEqual(imageBytes);
   });
 
@@ -287,7 +288,8 @@ describe('CLI failure classification and partial output state', () => {
     const result = await run(options(input, path.join(root, 'out.html'), missingImage, true));
 
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain('E_IMAGE_NOT_FOUND');
+    expect(result.stderr).toContain('W_IMAGE_NOT_FOUND');
+    expect(result.stderr).toContain('E_OUTPUT_COLLISION');
     await expect(readFile(missingImage)).rejects.toMatchObject({ code: 'ENOENT' });
   });
 

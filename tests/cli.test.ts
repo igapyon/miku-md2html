@@ -37,13 +37,47 @@ describe('CLI', () => {
     expect(stderr.text()).toBe('');
     expect(await readFile(output, 'utf8')).toContain('id="miku-h-guide"');
     const reportValue = JSON.parse(await readFile(report, 'utf8'));
-    expect(reportValue.schemaVersion).toBe('1');
+    expect(reportValue.schemaVersion).toBe('2');
     expect(reportValue.success).toBe(true);
     expect(reportValue.output.written).toBe(true);
+    expect(reportValue.output.imageMode).toBe('reference');
     const original = await readFile(output);
     const second = await runCli([input, '--out', output], { stdout: capture().stream, stderr: capture().stream });
     expect(second).toBe(1);
     expect(await readFile(output)).toEqual(original);
+  });
+
+  it('keeps missing raster references as warning-only output and supports embed mode', async () => {
+    const root = await tempRoot();
+    const missingInput = path.join(root, 'missing.md');
+    const missingOutput = path.join(root, 'out', 'missing.html');
+    const missingReport = path.join(root, 'out', 'missing.json');
+    await writeFile(missingInput, '![to add later](assets/later.png)');
+    const warningErr = capture();
+    const missingCode = await runCli([missingInput, '--out', missingOutput, '--report-json', missingReport], {
+      stdout: capture().stream,
+      stderr: warningErr.stream,
+    });
+    expect(missingCode).toBe(0);
+    expect(warningErr.text()).toContain('W_IMAGE_NOT_FOUND');
+    expect(await readFile(missingOutput, 'utf8')).toContain('src="../assets/later.png"');
+    const missingReportValue = JSON.parse(await readFile(missingReport, 'utf8'));
+    expect(missingReportValue.success).toBe(true);
+    expect(missingReportValue.stats).toMatchObject({ imageOccurrences: 1, referencedImageOccurrences: 1, embeddedImageOccurrences: 0, omittedImageOccurrences: 0 });
+
+    const image = path.join(root, 'pixel.png');
+    const imageBytes = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Z2q0AAAAASUVORK5CYII=', 'base64');
+    const input = path.join(root, 'embed.md');
+    const output = path.join(root, 'embed.html');
+    const report = path.join(root, 'embed.json');
+    await writeFile(image, imageBytes);
+    await writeFile(input, '![pixel](pixel.png)');
+    const embedCode = await runCli([input, '--out', output, '--report-json', report, '--image-mode=embed'], { stdout: capture().stream, stderr: capture().stream });
+    expect(embedCode).toBe(0);
+    expect(await readFile(output, 'utf8')).toContain(`data:image/png;base64,${imageBytes.toString('base64')}`);
+    const embedReportValue = JSON.parse(await readFile(report, 'utf8'));
+    expect(embedReportValue.output.imageMode).toBe('embed');
+    expect(embedReportValue.stats).toMatchObject({ embeddedImageOccurrences: 1, referencedImageOccurrences: 0, omittedImageOccurrences: 0 });
   });
 
   it('writes a failure report without committing HTML for remote images', async () => {

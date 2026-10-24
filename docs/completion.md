@@ -4,7 +4,7 @@ Date: 2026-10-22
 
 ## Implemented
 
-The initial Node implementation is in `src/ts/`. It provides a filesystem-free conversion core, a Node asset resolver, and a CLI with staged output and optional JSON reports. It renders CommonMark/GFM, front matter, headings and footnotes; sanitizes author HTML; validates SVG and its CSS; embeds local raster images, SVG files, data URLs, and inline SVG in one self-contained HTML document. Editable viewer CSS/JavaScript are embedded during bundle generation. The repository also contains API/CLI/development documentation, a generated license inventory with available full license texts, and CLI/runtime/source bundle builders. The initial package/runtime implementation was `0.3.0`. A later syntax-highlighting milestone reached `0.3.2`; the current version is `0.4.0`.
+The initial Node implementation is in `src/ts/`. It provides a filesystem-free conversion core, a Node asset resolver, and a CLI with staged output and optional JSON reports. It renders CommonMark/GFM, front matter, headings and footnotes; sanitizes author HTML; validates SVG and its CSS; and handles local images. Up to `0.4.0`, the default embedded local rasters into the HTML. Version `0.5.0` changes the default to relative references for local raster images while continuing to validate and embed SVG files, data URLs, and inline SVG. `--image-mode embed` preserves portable single-file output for supported local rasters. Editable viewer CSS/JavaScript are embedded during bundle generation. The repository also contains API/CLI/development documentation, a generated license inventory with available full license texts, and CLI/runtime/source bundle builders. The initial package/runtime implementation was `0.3.0`; a later syntax-highlighting milestone reached `0.3.2`.
 
 Initial product choices in the implementation specification remain defaults, not individually user-confirmed limits. The 5 MiB image warning, 20 MiB output warning, and 100 MiB output cap were not changed after the measurements below; these measurements do not establish browser limits or performance guarantees.
 
@@ -47,9 +47,15 @@ These are single-run local measurements, not a benchmark series. The repeated-im
 
 - Node.js 22 and 24: neither is installed in the current environment. Node 26 passing does not establish compatibility with those versions.
 - Chrome with JavaScript disabled, at 320px, in print mode, or with network requests instrumented.
-- Exact large-image/output warning boundaries, report-commit failure, and concurrent output creation races.
+- The exact 20 MiB output warning boundary and broader Chrome image/path matrix. Report-commit failure and concurrent output creation are covered by automated tests.
 - A fresh dependency audit and license-obligation review immediately before public release.
 - The Release asset workflow has not yet run against a GitHub Release. No tag, GitHub Release, npm publication, or upload was created as part of this local change.
+
+## 2026-10-24 image reference mode
+
+Version `0.5.0` defaults to keeping local PNG/JPEG/GIF/WebP images at their original paths and writes output-relative `src` URLs. The CLI does not copy image files. SVG files remain validated and embedded in both modes; data URLs and inline SVG remain embedded. `--image-mode embed` embeds local raster images as before. Expected local-file issues now produce warnings and do not fail an otherwise valid conversion; remote and malformed image URLs, unsafe SVG, resolver contract violations, and output collisions remain errors. JSON report schema 2 records the mode and image occurrence categories.
+
+The implementation plan and acceptance matrix are in [image-reference-plan.md](image-reference-plan.md). On Node.js `v26.12.0`, `npm test` passed with 10 files and 124 tests. The copied CLI/runtime bundles and a temporary 0.5.0 release-asset staging area passed their smoke checks. Chrome opened the default relative-image HTML from `file://`; it also displayed an embed-mode HTML copied away from its original image directory. JavaScript-disabled, 320px, print, and instrumented-network checks remain unverified, as do Node 22/24.
 
 ## Syntax highlighting implementation
 

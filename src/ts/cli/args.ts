@@ -14,6 +14,7 @@ export type CliOptions = {
   title?: string;
   lang?: string;
   assetRoot?: string;
+  imageMode: 'reference' | 'embed';
   noToc: boolean;
   maxOutputMib: number;
   reportJson?: string;
@@ -22,12 +23,12 @@ export type CliOptions = {
 
 export type ParsedCli = { mode: 'convert'; options: CliOptions } | { mode: 'help' } | { mode: 'version' };
 
-const valueOptions = new Set(['--out', '--title', '--lang', '--asset-root', '--max-output-mib', '--report-json']);
+const valueOptions = new Set(['--out', '--title', '--lang', '--asset-root', '--image-mode', '--max-output-mib', '--report-json']);
 const booleanOptions = new Set(['--no-toc', '--force']);
 
 export const helpText = `${productName} ${version}
 
-Convert one local Markdown file and its local images into a self-contained HTML file.
+Convert one local Markdown file into an HTML file. Local raster images are referenced by default.
 
 Usage:
   node miku-md2html-${version}.mjs <input.md> --out <output.html> [options]
@@ -39,6 +40,7 @@ Options:
   --title <text>           Override the document title.
   --lang <tag>             Set the document language (default: ja).
   --asset-root <directory> Allow local image files under this directory.
+  --image-mode <mode>      reference (default) or embed local raster images.
   --no-toc                 Omit the generated table of contents.
   --max-output-mib <n>     HTML size limit from 1 through 1024 MiB (default: 100).
   --report-json <file>     Write a versioned JSON result report.
@@ -46,8 +48,8 @@ Options:
   --help                   Show this help.
   --version                Show the full package version.
 
-The output embeds CSS, viewer JavaScript, SVG, and supported images. Remote images are rejected.
-Images larger than 5 MiB and HTML larger than 20 MiB produce warnings. The default HTML cap is 100 MiB.
+The output embeds CSS, viewer JavaScript, SVG, and data URL images. Local raster images stay at their original paths unless --image-mode embed is used. Remote images are rejected.
+Local image file problems produce warnings. Images larger than 5 MiB and HTML larger than 20 MiB produce warnings. The default HTML cap is 100 MiB.
 The Markdown input itself must not exceed the configured HTML cap.
 Success writes a one-line summary to stdout; diagnostics go to stderr. Exit codes: 0 success, 1 conversion/I/O failure, 2 usage error, 3 internal error.
 
@@ -105,6 +107,8 @@ export function parseArgs(argv: string[]): ParsedCli {
   if (title !== undefined && !title.trim()) throw new CliUsageError('--title must not be blank.');
   const lang = values.get('--lang');
   if (lang !== undefined && !isValidLanguageTag(lang.trim())) throw new CliUsageError('--lang must be an ASCII language tag such as ja or en-US.');
+  const imageMode = values.get('--image-mode') ?? 'reference';
+  if (imageMode !== 'reference' && imageMode !== 'embed') throw new CliUsageError('--image-mode must be reference or embed.');
   const maxText = values.get('--max-output-mib') ?? '100';
   if (!/^\d+$/.test(maxText)) throw new CliUsageError('--max-output-mib must be an integer from 1 through 1024.');
   const maxOutputMib = Number(maxText);
@@ -117,6 +121,7 @@ export function parseArgs(argv: string[]): ParsedCli {
       ...(title !== undefined ? { title: title.trim() } : {}),
       ...(lang !== undefined ? { lang: lang.trim() } : {}),
       ...(values.has('--asset-root') ? { assetRoot: values.get('--asset-root')! } : {}),
+      imageMode,
       noToc: flags.has('--no-toc'),
       maxOutputMib,
       ...(values.has('--report-json') ? { reportJson: values.get('--report-json')! } : {}),

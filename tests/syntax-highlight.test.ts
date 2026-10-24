@@ -212,15 +212,15 @@ describe('syntax highlighting', () => {
       describe: async () => ({ id: 'pixel', label: 'pixel.png', byteLength: imageBytes.byteLength }),
       read: async () => { counter.reads += 1; return imageBytes; },
     });
-    const highlighted = await convertMarkdownToHtml({ markdown: markdownFor('javascript'), inputName: 'with-image.md', assets: resolverFor({ reads: 0 }) });
-    const plain = await convertMarkdownToHtml({ markdown: markdownFor('text'), inputName: 'with-image.md', assets: resolverFor({ reads: 0 }) });
+    const highlighted = await convertMarkdownToHtml({ markdown: markdownFor('javascript'), inputName: 'with-image.md', assets: resolverFor({ reads: 0 }), options: { imageMode: 'embed' } });
+    const plain = await convertMarkdownToHtml({ markdown: markdownFor('text'), inputName: 'with-image.md', assets: resolverFor({ reads: 0 }), options: { imageMode: 'embed' } });
     expect(highlighted.success && plain.success).toBe(true);
     if (!highlighted.success || !plain.success) return;
     expect(highlighted.stats.htmlBytes).toBeGreaterThan(plain.stats.htmlBytes);
     const counter = { reads: 0 };
     const limited = await convertMarkdownToHtml({
       markdown: markdownFor('javascript'), inputName: 'with-image.md',
-      options: { maxOutputBytes: Math.floor((highlighted.stats.htmlBytes + plain.stats.htmlBytes) / 2) },
+      options: { maxOutputBytes: Math.floor((highlighted.stats.htmlBytes + plain.stats.htmlBytes) / 2), imageMode: 'embed' },
       assets: resolverFor(counter),
     });
     expect(limited.success).toBe(false);

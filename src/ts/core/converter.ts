@@ -4,7 +4,7 @@ import remarkGfm from 'remark-gfm';
 import remarkParse from 'remark-parse';
 import remarkRehype from 'remark-rehype';
 import { unified } from 'unified';
-import type { ConvertOptions, ConvertRequest, ConvertResult, Diagnostic, FrontMatter } from '../types.js';
+import type { ConvertOptions, ConvertRequest, ConvertResult, Diagnostic, FrontMatter, ImageMode } from '../types.js';
 import { addDiagnostic, hasErrors, stableDiagnostics } from './diagnostics.js';
 import { parseFrontMatter, isValidLanguageTag } from './front-matter.js';
 import { applySyntaxHighlighting, collectCodeBlockSources } from './syntax-highlight.js';
@@ -18,10 +18,10 @@ import { articleSanitizeSchema, rehypeSanitize, sanitizeArticleTree } from './ar
 const MiB = 1_048_576;
 const defaultMaxOutputBytes = 100 * MiB;
 const warningOutputBytes = 20 * MiB;
-type InternalOptions = Required<Pick<ConvertOptions, 'toc' | 'maxOutputBytes'>> & Pick<ConvertOptions, 'title' | 'lang'>;
+type InternalOptions = Required<Pick<ConvertOptions, 'toc' | 'maxOutputBytes' | 'imageMode'>> & Pick<ConvertOptions, 'title' | 'lang'>;
 
 function baseStats() {
-  return { headingCount: 0, imageOccurrences: 0, uniqueAssets: 0, uniqueSourceAssetBytes: 0, embeddedPayloadBytes: 0 };
+  return { headingCount: 0, imageOccurrences: 0, uniqueAssets: 0, uniqueSourceAssetBytes: 0, embeddedPayloadBytes: 0, embeddedImageOccurrences: 0, referencedImageOccurrences: 0, omittedImageOccurrences: 0 };
 }
 
 function normalizeSource(markdown: string): string {
@@ -59,6 +59,11 @@ function validateRequest(request: ConvertRequest, diagnostics: Diagnostic[]): In
     addDiagnostic(diagnostics, 'error', 'E_OPTIONS', 'toc must be a boolean.');
     return undefined;
   }
+  const imageMode: ImageMode = options.imageMode === undefined ? 'reference' : options.imageMode;
+  if (imageMode !== 'reference' && imageMode !== 'embed') {
+    addDiagnostic(diagnostics, 'error', 'E_OPTIONS', 'imageMode must be reference or embed.');
+    return undefined;
+  }
   const maxOutputBytes = options.maxOutputBytes ?? defaultMaxOutputBytes;
   if (!Number.isSafeInteger(maxOutputBytes) || maxOutputBytes < 1 || maxOutputBytes > 1_073_741_824) {
     addDiagnostic(diagnostics, 'error', 'E_OPTIONS', 'maxOutputBytes must be an integer from 1 through 1073741824.');
@@ -69,6 +74,7 @@ function validateRequest(request: ConvertRequest, diagnostics: Diagnostic[]): In
     ...(options.lang !== undefined ? { lang: options.lang.trim() } : {}),
     toc: options.toc ?? true,
     maxOutputBytes,
+    imageMode,
   };
 }
 
@@ -103,7 +109,7 @@ export async function convertMarkdownToHtml(request: ConvertRequest): Promise<Co
     return resultFailure(metadata, diagnostics, stats);
   }
 
-  const images = createImageEmbeddingSession({ ...(request.assets ? { assets: request.assets } : {}), diagnostics, lineOffset: frontMatter.lineOffset, maxOutputBytes: options.maxOutputBytes });
+  const images = createImageEmbeddingSession({ ...(request.assets ? { assets: request.assets } : {}), diagnostics, lineOffset: frontMatter.lineOffset, maxOutputBytes: options.maxOutputBytes, imageMode: options.imageMode });
   await sanitizeArticleTree(tree, frontMatter.body, diagnostics, frontMatter.lineOffset, images);
   completeImageReferenceScan(request.assets);
   Object.assign(stats, images.snapshotStats());
@@ -128,7 +134,7 @@ export async function convertMarkdownToHtml(request: ConvertRequest): Promise<Co
 
   applySyntaxHighlighting(tree, codeBlockSources, diagnostics, frontMatter.lineOffset);
 
-  const skeleton = renderDocument(tree, metadata, toc);
+  const skeleton = renderDocument(tree, metadata, toc, options.imageMode);
   const estimatedBytes = Buffer.byteLength(skeleton, 'utf8') + images.pendingSizeDelta();
   if (estimatedBytes > options.maxOutputBytes) {
     addDiagnostic(diagnostics, 'error', 'E_OUTPUT_TOO_LARGE', 'Estimated HTML exceeds the configured output limit.', undefined, { estimatedBytes, maxOutputBytes: options.maxOutputBytes });
@@ -140,7 +146,7 @@ export async function convertMarkdownToHtml(request: ConvertRequest): Promise<Co
     return resultFailure(metadata, diagnostics, { ...stats, ...images.snapshotStats() });
   }
 
-  const html = renderDocument(tree, metadata, toc);
+  const html = renderDocument(tree, metadata, toc, options.imageMode);
   const htmlBytes = Buffer.byteLength(html, 'utf8');
   if (htmlBytes > options.maxOutputBytes) {
     addDiagnostic(diagnostics, 'error', 'E_OUTPUT_TOO_LARGE', 'Generated HTML exceeds the configured output limit.', undefined, { htmlBytes, maxOutputBytes: options.maxOutputBytes });

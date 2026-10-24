@@ -30,6 +30,7 @@ describe('classifyImageSource', () => {
           return { id: decodedRelativePath, label: decodedRelativePath, byteLength: bytes.byteLength };
         },
         async read() { return bytes; },
+        async reference(path) { return `./${encodeURIComponent(path)}`; },
       },
     });
     expect(result.success).toBe(true);

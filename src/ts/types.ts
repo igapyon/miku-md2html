@@ -9,6 +9,7 @@ export type Diagnostic = {
 };
 
 export type AssetInfo = { id: string; label: string; byteLength: number };
+export type ImageMode = 'reference' | 'embed';
 
 export type AssetErrorCode =
   | 'E_INPUT_READ'
@@ -35,6 +36,8 @@ export type AssetErrorCode =
   | 'E_SVG_UNSUPPORTED'
   | 'E_ASSET_OUTSIDE_ROOT'
   | 'E_ASSET_CHANGED'
+  | 'E_ASSET_REFERENCE_REQUIRED'
+  | 'E_IMAGE_REFERENCE'
   | 'E_OUTPUT_TOO_LARGE';
 
 export class AssetAccessError extends Error {
@@ -50,6 +53,8 @@ export class AssetAccessError extends Error {
 export interface AssetResolver {
   describe(decodedRelativePath: string): Promise<AssetInfo>;
   read(id: string, maxBytes: number): Promise<Uint8Array>;
+  reference?(decodedRelativePath: string): Promise<string>;
+  readPrefix?(id: string, maxBytes: number): Promise<Uint8Array>;
 }
 
 export type ConvertOptions = {
@@ -57,6 +62,7 @@ export type ConvertOptions = {
   lang?: string;
   toc?: boolean;
   maxOutputBytes?: number;
+  imageMode?: ImageMode;
 };
 
 export type ConvertRequest = {
@@ -72,6 +78,9 @@ export type ConversionStats = {
   uniqueAssets: number;
   uniqueSourceAssetBytes: number;
   embeddedPayloadBytes: number;
+  embeddedImageOccurrences: number;
+  referencedImageOccurrences: number;
+  omittedImageOccurrences: number;
   htmlBytes?: number;
 };
 

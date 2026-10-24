@@ -1,9 +1,9 @@
 {
   "name": "miku-md2html",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
-  "description": "Convert Markdown and local images into a self-contained HTML document.",
+  "description": "Convert Markdown to HTML with embedded SVG and optional embedded local raster images.",
   "license": "Apache-2.0",
   "engines": {
     "node": ">=22"

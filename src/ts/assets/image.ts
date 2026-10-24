@@ -4,6 +4,7 @@ import { readRasterDimensions, type RasterMime } from './raster-dimensions.js';
 
 export type { RasterMime } from './raster-dimensions.js';
 export type ImageInfo = { mime: RasterMime | 'image/svg+xml'; width?: number; height?: number; isSvg: boolean };
+export type ImageKind = { kind: 'svg' } | { kind: 'raster'; mime: RasterMime } | { kind: 'unknown' };
 
 function invalid(message: string): never {
   throw new AssetAccessError('E_IMAGE_INVALID', message);
@@ -17,6 +18,20 @@ function detectRasterMime(bytes: Uint8Array): RasterMime {
   if (bytes.length >= 6 && ['GIF87a', 'GIF89a'].includes(Buffer.from(bytes.subarray(0, 6)).toString('ascii'))) return 'image/gif';
   if (bytes.length >= 12 && Buffer.from(bytes.subarray(0, 4)).toString('ascii') === 'RIFF' && Buffer.from(bytes.subarray(8, 12)).toString('ascii') === 'WEBP') return 'image/webp';
   throw new AssetAccessError('E_IMAGE_FORMAT', 'The image format is unsupported or its header is invalid.');
+}
+
+/** Identify a supported image from a bounded prefix without validating its contents. */
+export function sniffImageKind(bytes: Uint8Array): ImageKind {
+  const prefix = Buffer.from(bytes.subarray(0, 256)).toString('utf8').trimStart();
+  if (prefix.startsWith('<svg') || prefix.startsWith('<?xml') || prefix.startsWith('<!--') || /^<!\s*(?:doctype|entity)/i.test(prefix)) {
+    return { kind: 'svg' };
+  }
+  try {
+    return { kind: 'raster', mime: detectRasterMime(bytes) };
+  } catch (error) {
+    if (error instanceof AssetAccessError && error.code === 'E_IMAGE_FORMAT') return { kind: 'unknown' };
+    throw error;
+  }
 }
 
 function inspectContainer(bytes: Uint8Array, mime: RasterMime): void {
@@ -58,9 +73,8 @@ export function inspectRaster(bytes: Uint8Array, declaredMime?: string): { mime:
 }
 
 export function inspectImage(bytes: Uint8Array, expectedMime?: string): ImageInfo {
-  const prefix = Buffer.from(bytes.subarray(0, 256)).toString('utf8').trimStart();
-  const isSvg = prefix.startsWith('<svg') || prefix.startsWith('<?xml') || prefix.startsWith('<!--') || /^<!\s*(?:doctype|entity)/i.test(prefix);
-  if (isSvg) {
+  const kind = sniffImageKind(bytes);
+  if (kind.kind === 'svg') {
     if (expectedMime && expectedMime !== 'image/svg+xml') invalid('Image data MIME does not match SVG content.');
     const dimensions: SvgInfo = inspectSvg(bytes);
     return { mime: 'image/svg+xml', isSvg: true, ...dimensions };

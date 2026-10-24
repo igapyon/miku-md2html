@@ -31,14 +31,14 @@ export function reportObject(
   outputBytes?: number,
 ) {
   return {
-    schemaVersion: '1',
+    schemaVersion: '2',
     tool: { name: productName, version },
     success,
     exitCode,
     input: { path: options.input, ...(inputBytes !== undefined ? { bytes: inputBytes } : {}) },
-    output: { path: options.output, written: outputWritten, ...(outputBytes !== undefined ? { bytes: outputBytes } : {}) },
+    output: { path: options.output, imageMode: options.imageMode, written: outputWritten, ...(outputBytes !== undefined ? { bytes: outputBytes } : {}) },
     metadata: result?.metadata ?? { title: options.title ?? 'Untitled', lang: options.lang ?? 'ja' },
-    stats: result?.stats ?? { headingCount: 0, imageOccurrences: 0, uniqueAssets: 0, uniqueSourceAssetBytes: 0, embeddedPayloadBytes: 0 },
+    stats: result?.stats ?? { headingCount: 0, imageOccurrences: 0, uniqueAssets: 0, uniqueSourceAssetBytes: 0, embeddedPayloadBytes: 0, embeddedImageOccurrences: 0, referencedImageOccurrences: 0, omittedImageOccurrences: 0 },
     diagnostics: stableDiagnostics(diagnostics),
   };
 }
