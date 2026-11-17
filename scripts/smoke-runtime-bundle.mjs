@@ -20,6 +20,22 @@ try {
     assert.match(result.html, /<h1 id="miku-h-smoke">Smoke<\/h1>/);
     assert.match(result.html, /Content-Security-Policy/);
     assert.equal(result.stats.headingCount, 1);
+    assert.match(result.html, /<article>\n<h1 id="miku-h-smoke">Smoke<\/h1>\n<details class="miku-md2html-toc"/);
+  }
+
+  const layoutRequest = {
+    markdown: '# Layout\n\n<!-- first -->\n\n<!-- second -->\n\nParagraph\n\n```text\nfirst\n\n\nsecond\n```',
+    inputName: 'layout.md',
+  };
+  for (const toc of [true, false]) {
+    const layout = await runtime.convertMarkdownToHtml({ ...layoutRequest, options: { toc } });
+    assert.equal(layout.success, true);
+    if (layout.success) {
+      assert.equal(layout.html.includes('class="miku-md2html-toc"'), toc);
+      assert.match(layout.html, /\n\n<p>Paragraph<\/p>/);
+      assert.match(layout.html, /<pre><code>first\n\n\nsecond\n<\/code><\/pre>/);
+      assert.equal(layout.diagnostics.filter((item) => item.code === 'W_HTML_SANITIZED').length, 2);
+    }
   }
 
   const png = new Uint8Array(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Z2q0AAAAASUVORK5CYII=', 'base64'));

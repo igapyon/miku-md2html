@@ -1,5 +1,17 @@
 # Development notes
 
+## 2026-11-17 HTML output placement and whitespace (GitHub #8/#9)
+
+- Shared reference checked: installed `igapyon-miku-soft-developer`, 2026-11-17, existing maintenance workflow and Node main application principles. The installed skill directory has no Git metadata, so its exact source revision was not identified. Repository conventions were read as the baseline. This change stays within the requested HTML behavior; broader maintenance adoption is deferred.
+- A leading top-level H1 now stays in one article with the generated TOC immediately after it. Other leading content keeps the TOC before the article. TOC entries, heading IDs, metadata, and diagnostics retain their existing rules.
+- Serialization copies the article structure and limits only formatting whitespace between block elements to one blank line. It preserves inline/text whitespace and entire pre/code subtrees. Generated article boundary newlines take part in the same limit. Size estimation and final output both use this serialization without mutating pending image nodes.
+- Added renderer/core regressions, CLI assertions, and copied CLI/runtime bundle smoke coverage. The two existing heading-bearing snapshots changed only in HTML hash/byte count; saved before/after HTML confirms TOC relocation and structural whitespace changes. The image-only and code-only snapshots remain unchanged.
+- At implementation validation time, Node `v26.12.1` passed `npm test` (11 files / 159 tests), followed by bundle generation and copied CLI/runtime smoke checks. Notices were regenerated for the same 208 locked package/version entries. Dependencies, product version `0.5.0`, and report schema 2 were unchanged at that point.
+- Self-review follow-up: added `caption` to the structural whitespace containers. Two regressions cover comments/scripts removed between caption paragraphs, and a third preserves inline whitespace and pre/code text within captions. Both removal cases failed before the fix. `npm test` then passed (11 files / 162 tests); bundle generation, CLI/runtime smoke checks, and both caption cases against the generated runtime passed.
+- The miku-scm SemVer minor preflight validated `0.5.0` → `0.6.0`. The version is aligned in `package.json`, both `package-lock.json` version fields, and `src/ts/index.ts`; README examples and current-version specification/report examples use the new bundle name/version. The 162-test run and bundle checks above were completed before this version-only edit.
+- [Implementation plan and results](html-output-plan.md) includes the acceptance matrix, #5 completion evidence, and outstanding checks. #5 already reduced direct runtime dependencies from 14 to 11 in `2a872b7`; no further dependency replacement was needed.
+- Node 22/24 verification remains pending. The Chrome control tool reported that Chrome was unavailable; visual layout, JavaScript-disabled, 320px, and print checks were not performed for this change. Existing browser TODOs remain open.
+
 ## Initial implementation record
 
 - Date: 2026-10-22

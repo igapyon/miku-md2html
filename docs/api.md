@@ -30,6 +30,12 @@ const result = await convertMarkdownToHtml(request);
 
 The function returns a discriminated result. `success: true` includes complete HTML, metadata, diagnostics, and byte counts. `success: false` omits HTML and includes error diagnostics. The core has no filesystem access; local image paths require a resolver.
 
+## HTML structure
+
+With the default `toc: true`, a leading top-level H1 in the sanitized article is followed immediately by the generated table of contents, then the remaining content, all within one `article`. If the first content node is a paragraph, H2, quote, list, or other container, the table of contents precedes the `article`. Formatting whitespace before the first node is ignored for placement. The metadata title does not determine placement. Heading IDs, TOC entries, and their source order follow the same rules in either layout. `toc: false` and documents without headings omit the generated TOC.
+
+The serializer limits formatting whitespace between block elements to at most one blank line. It preserves text and inline whitespace, soft/hard breaks, and the complete contents of `pre` and `code`, including highlighted code. Both output-size estimation and final serialization apply these rules; `stats.htmlBytes` counts the final UTF-8 HTML.
+
 ## Image handling
 
 `reference` is the default. Local PNG, JPEG, GIF, and WebP files are checked and referenced from their original files. The HTML URL must be relative to the location where the caller will save the generated HTML. The caller's `reference` method receives a once-percent-decoded Markdown path and returns an encoded relative image URL beginning with `./` or `../`. The core checks the URL shape before placing it in HTML. It does not copy or write the image.

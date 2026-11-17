@@ -85,7 +85,7 @@ REQ-002: HTMLをfile://で開いて本文・表・コード・SVGと補助操作
 
 REQ-003: 初版は単一のローカルMarkdown入力を扱います。ディレクトリ一括変換、サイト生成、テンプレート言語、任意JS/CSSの取り込み、画像の再圧縮/縮小、PDF生成、ブラウザー版UI、Java版、MCPは後続候補です。このリポジトリは独自のAgent Skillを提供せず、製品向けAgent Skillの同梱先は `miku-md2formats-skills` とします。入力にMermaid/数式コードがあれば、初版は通常のコードとして表示します。
 
-REQ-004: 初期実装時のpackage version案は0.1.0でした。利用者指定により0.3.2へ変更され、現在のpackage/runtime versionは0.5.0です。Node.js >=22を対象とし、22と24で動作確認し、配布buildは24を使います。skill既定の>=20からの変更理由は、設計確認時点でNode20がEOLであることです。実装時には公式状況と使用dependencyのengine条件を再確認します。
+REQ-004: 初期実装時のpackage version案は0.1.0でした。利用者指定により0.3.2へ変更され、現在のpackage/runtime versionは0.6.0です。Node.js >=22を対象とし、22と24で動作確認し、配布buildは24を使います。skill既定の>=20からの変更理由は、設計確認時点でNode20がEOLであることです。実装時には公式状況と使用dependencyのengine条件を再確認します。
 
 ## 4. 入力、文字列、front matter
 
@@ -114,6 +114,8 @@ REQ-023: H1-H6にdocument内で一意なIDを付けます。slugはplain textを
 例: 「設計 メモ」→miku-h-設計-メモ、同名2件目→miku-h-設計-メモ-2。「foo」「foo」「foo-2」の順はmiku-h-foo、miku-h-foo-2、miku-h-foo-2-2です。
 
 REQ-024: 目次はH1-H6をsource順に含め、階層はlevel情報で表現します。headingがなければ目次を出しません。--no-tocでもheading IDは作ります。fragment linkは一度だけpercent decodeして照合し、既知の生成IDか、prefixなしの割当済みslugへ一致すれば実際のIDへ書き換えます。不明なfragmentは安全なhrefを残しW_ANCHOR_UNRESOLVEDにします。曖昧な重複への無接尾辞linkは最初のheadingです。
+
+REQ-024a: 目次の位置はサニタイズ後のarticle直下の先頭contentで決めます。space/tab/LFのみのtext nodeを除いた先頭がH1なら、同じarticle内でH1、目次、残りの本文の順に出します。H1直後の段落の役割は推測しません。先頭が段落・H2・引用・list・div等なら、main直下で目次、articleの順に出します。途中や入れ子のH1、metadata titleは位置の判定に使いません。本文見出しと目次項目の対象・順序・IDを維持し、--no-tocと見出しなしでは目次を生成しません。
 
 REQ-025: 脚注IDとbackrefは生成側の予約namespaceへ統一し、sanitize後も相互リンクを維持します。入力HTMLのid/nameでheading・脚注・UIのIDを上書きできない設計にします。parser/sanitizerのprefix処理をfixtureで確かめてからmappingを固定してください。
 
@@ -182,6 +184,8 @@ REQ-054: CLIは入力Markdownのstatサイズが設定HTML上限より大きい�
 
 REQ-060: UTF-8、BOMなし、LF、末尾newline1個とします。doctype/html/head/body、charset/viewport/title、任意description、固定style、目次、main/article、固定scriptを持つ完全文書です。sourceの絶対path、生成日時、host名を自動挿入しません。
 
+REQ-060a: ブロック要素間の整形用空白は、空行を最大1行（LF2個）に制限します。サニタイズで要素を除去して隣接したspace/tab/LFのみのtext nodeは、連続区間として処理します。article境界に生成するLFも含めて上限を適用します。本文を含むtext、inline要素間や段落内の改行、属性、pre/codeの全子孫、CSS/JavaScriptの内容は変更しません。判定可能な構造コンテナーとブロック境界の一覧・非ASCII空白等の保護条件は[HTML出力計画](html-output-plan.md#3-9-整形用の連続空行を最大1行にする)に記載します。容量見積もりと最終出力に同じ整形規則を使い、画像埋め込み用の元ツリーを整形で変更しません。
+
 REQ-061: CSSはsystem font、本文max-width、320pxからの可読性、見出し間隔、code/tableの局所横scroll、画像max-width:100%/height:autoを扱います。Material Design 3の色の役割を参考に、ニュートラルな背景と控えめな藍色を使い、light/darkで意味を保ったまま切り替えます。角丸のsurfaceと十分な余白で本文を読みやすくします。body全体が横overflowする状態を避けます。元画像の画素数をCSSの縮小表示で減らしたことにしません。印刷では操作ボタンと目次の開閉UIを非表示にし、本文とtableを読める状態にします。
 
 REQ-062: 目次はnative details/summaryで開閉でき、JavaScript無効でも使えます。コードのコピーボタンはJSが動く場合だけ追加し、インラインSVGアイコンとaria-labelで操作を示します。clipboard.writeText成功後だけ成功表示し、利用できない場合はコードを選択して手動copyの案内を出します。readonly codeの内容を変更しません。statusはaria-liveで伝えます。
@@ -202,7 +206,7 @@ miku-md2html --help
 miku-md2html --version
 ~~~
 
-単体配布後の実行形はnode miku-md2html-0.5.0.mjs input.md --out output.htmlです。これは予定asset名であり、現時点で公開済みではありません。
+単体配布後の実行形はnode miku-md2html-0.6.0.mjs input.md --out output.htmlです。これは予定asset名であり、現時点で公開済みではありません。
 
 | 引数/option | 契約 |
 | --- | --- |
@@ -309,7 +313,7 @@ REQ-100: --report-jsonはschemaVersion:'2'、tool、success、exitCode、input�
 ~~~json
 {
   "schemaVersion": "2",
-  "tool": { "name": "miku-md2html", "version": "0.5.0" },
+  "tool": { "name": "miku-md2html", "version": "0.6.0" },
   "success": true,
   "exitCode": 0,
   "input": { "path": "input.md", "bytes": 128 },
@@ -467,6 +471,8 @@ REQ-113: .gitignore、workplace/.gitkeep、README、実際の残作業を記すT
 | AC-055 | title/description/altにHTMLや閉じtag文字列 | text/属性としてescapeされ、実行されない |
 | AC-056 | HTML temporary書込失敗、既存reportのみ存在 | 規則に従う非zero終了、既存成果物を保持 |
 | AC-057 | source assetを読取中に上限を超える | adapterのmaxBytesで停止し、無制限buffer化しない |
+| AC-058 | 先頭H1、段落/H2/引用から始まる文書、metadata title、--no-toc | REQ-024aの配置。本文と目次の見出し順序・IDを維持 |
+| AC-059 | 連続コメント/script除去、隣接空白、article境界、code/inline改行 | 構造上の空行だけ最大1行。code/text/属性とCSPを保持し、画像込みの正確な出力容量で判定 |
 
 boundaryテストは小さいconfigやmockを使い、大量の実データをGitへ置きません。5/20/100MiB等の実寸確認はignored workplaceへ生成して行い、fixtureの目的を明記します。
 

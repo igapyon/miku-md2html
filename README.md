@@ -5,7 +5,7 @@
 ## Use
 
 ```sh
-node miku-md2html-0.5.0.mjs ./guide.md --out ./out/guide.html
+node miku-md2html-0.6.0.mjs ./guide.md --out ./out/guide.html
 ```
 
 When a GitHub Release for the exact `v<package version>` tag is published, the [release workflow](.github/workflows/release-cli-runtime-bundles.yml) builds and attaches the versioned CLI, import runtime, and source archive. Until a release is published, install dependencies and run the source-tree CLI:
@@ -24,7 +24,7 @@ The CLI creates missing output directories. It refuses existing destinations unl
 Use `--asset-root` to allow images outside the Markdown file's directory. Relative image paths are still resolved from the Markdown file's directory:
 
 ```sh
-node miku-md2html-0.5.0.mjs ./docs/guide.md --out ./out/guide.html --asset-root ./
+node miku-md2html-0.6.0.mjs ./docs/guide.md --out ./out/guide.html --asset-root ./
 ```
 
 Image URLs in the HTML are relative to the output file and point to the original image files. Keep those files at the same relative paths when moving or sharing the HTML. The converter does not copy or rewrite image files.
@@ -34,6 +34,10 @@ Image URLs in the HTML are relative to the output file and point to the original
 ## Supported Markdown
 
 The converter supports CommonMark structures and GitHub Flavored Markdown tables, task lists, strikethrough, autolinks, and footnotes. Headings receive stable IDs and a native `details` table of contents. Recognized fenced code blocks receive syntax highlighting during conversion and get copy buttons when JavaScript is enabled. The generated CSS and token markup are embedded in the HTML, so highlighting works offline and with JavaScript disabled. Tables and code blocks scroll locally on narrow screens. Print styles keep document content readable.
+
+When the sanitized article starts with a top-level H1, the table of contents appears immediately after that H1, before the next paragraph. Otherwise, it appears before the article. Headings inside a quote, list, or other container do not change this placement. `--no-toc` omits the generated table of contents.
+
+Formatting whitespace between block elements is limited to one blank line in the HTML source. Text content, meaningful line breaks, and whitespace inside `pre` and `code` remain intact.
 
 ### Code block languages
 
