@@ -35,7 +35,9 @@ describe('CLI', () => {
     expect(exitCode).toBe(0);
     expect(stdout.text()).toContain('Converted');
     expect(stderr.text()).toBe('');
-    expect(await readFile(output, 'utf8')).toContain('id="miku-h-guide"');
+    const html = await readFile(output, 'utf8');
+    expect(html).toMatch(/<article>\n<h1 id="miku-h-guide">Guide<\/h1>\n<details class="miku-md2html-toc"/);
+    expect(html).toMatch(/<\/details>\n\n<p>Offline\.<\/p>/);
     const reportValue = JSON.parse(await readFile(report, 'utf8'));
     expect(reportValue.schemaVersion).toBe('2');
     expect(reportValue.success).toBe(true);
@@ -45,6 +47,21 @@ describe('CLI', () => {
     const second = await runCli([input, '--out', output], { stdout: capture().stream, stderr: capture().stream });
     expect(second).toBe(1);
     expect(await readFile(output)).toEqual(original);
+  });
+
+  it('omits the TOC and normalizes only structural blank lines when requested', async () => {
+    const root = await tempRoot();
+    const input = path.join(root, 'layout.md');
+    const output = path.join(root, 'layout.html');
+    await writeFile(input, '# Title\n\n<!-- first -->\n\n<!-- second -->\n\nParagraph\n\n```text\nfirst\n\n\nsecond\n```');
+    const stderr = capture();
+    const code = await runCli([input, '--out', output, '--no-toc'], { stdout: capture().stream, stderr: stderr.stream });
+    expect(code).toBe(0);
+    const html = await readFile(output, 'utf8');
+    expect(html).not.toContain('class="miku-md2html-toc"');
+    expect(html).toContain('<h1 id="miku-h-title">Title</h1>\n\n<p>Paragraph</p>');
+    expect(html).toContain('<pre><code>first\n\n\nsecond\n</code></pre>');
+    expect(stderr.text().match(/W_HTML_SANITIZED/g)).toHaveLength(2);
   });
 
   it('keeps missing raster references as warning-only output and supports embed mode', async () => {

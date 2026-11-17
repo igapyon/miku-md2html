@@ -1,5 +1,6 @@
 # TODO
 
+- [x] Place the TOC after a leading H1 and limit structural blank lines while preserving code/text (GitHub #8/#9); see [HTML output plan](docs/html-output-plan.md).
 - [x] Implement the 0.5.0 SVG-embedding / original-image-reference behavior and warning-only local-image checks; see [Luna implementation plan](docs/image-reference-plan.md).
 - [ ] Verify tests and generated CLI/runtime bundles on Node.js 22 and 24; the current environment only has Node 26 and Node 20.
 - [x] Cover the 40-million-pixel warning boundary (exact limit and above) in the core tests.

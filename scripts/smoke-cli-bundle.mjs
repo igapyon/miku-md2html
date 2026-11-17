@@ -26,6 +26,16 @@ try {
   if (stderr || !stdout.includes('Converted')) throw new Error(`CLI conversion smoke failed: ${stderr || stdout}`);
   const html = await readFile(output, 'utf8');
   if (!html.includes('<h1 id="miku-h-portable-smoke">Portable smoke</h1>')) throw new Error('Copied CLI output is incomplete.');
+  if (!/<article>\n<h1 id="miku-h-portable-smoke">Portable smoke<\/h1>\n<details class="miku-md2html-toc"/.test(html)) throw new Error('CLI did not place the TOC immediately after the leading H1.');
+
+  const layoutInput = path.join(temporary, 'layout.md');
+  const layoutOutput = path.join(temporary, 'layout.html');
+  await writeFile(layoutInput, '# Layout\n\n<!-- first -->\n\n<!-- second -->\n\nParagraph\n\n```text\nfirst\n\n\nsecond\n```\n');
+  const layoutRun = await exec(process.execPath, [copiedBinary, layoutInput, '--out', layoutOutput, '--no-toc'], { cwd: os.tmpdir(), maxBuffer: 1_000_000 });
+  const layoutHtml = await readFile(layoutOutput, 'utf8');
+  if ((layoutRun.stderr.match(/W_HTML_SANITIZED/g) ?? []).length !== 2 || !layoutRun.stdout.includes('Converted')) throw new Error('CLI layout smoke did not retain the sanitization diagnostics.');
+  if (layoutHtml.includes('class="miku-md2html-toc"') || !layoutHtml.includes('<h1 id="miku-h-layout">Layout</h1>\n\n<p>Paragraph</p>')) throw new Error('CLI no-TOC or structural blank-line behavior is incorrect.');
+  if (!layoutHtml.includes('<pre><code>first\n\n\nsecond\n</code></pre>')) throw new Error('CLI changed meaningful code blank lines.');
 
   const images = path.join(temporary, 'assets');
   const results = path.join(temporary, 'results');

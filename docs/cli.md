@@ -21,6 +21,8 @@ The input must be one regular `.md` or `.markdown` file encoded as UTF-8. A UTF-
 
 Value options accept `--key value` and `--key=value`. Values beginning with a hyphen must use the equals form. Boolean flags do not accept values. `--` ends option parsing. Duplicate or unknown options fail with exit code 2.
 
+The generated table of contents follows the first H1 when that H1 is the first top-level content in the sanitized article, before any following paragraph. Otherwise, it precedes the article; a nested or later H1 does not move it. `--no-toc` omits it while keeping heading IDs. Formatting whitespace between block elements is limited to one blank line in the HTML source. Code content and meaningful text line breaks are preserved.
+
 The converter never copies or rewrites local images. In reference mode, a local raster `src` is a URL relative to the HTML output file, so keep the original image files at the same relative paths when moving or sharing the HTML. SVG files, input data URLs, and inline SVG are embedded. `--image-mode embed` embeds supported local rasters too.
 
 Local image file checks that find a missing, unreadable, unsupported, invalid, changed, or out-of-root image produce warnings. A safe raster URL is retained when possible; a missing/unreadable `.svg` and an out-of-root image are omitted. Warnings alone still produce HTML and exit 0. Remote images, malformed image URLs, unsafe SVG content, output collisions, and output/report I/O failures remain errors.

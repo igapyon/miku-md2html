@@ -26,7 +26,7 @@ describe('refactoring compatibility contract', () => {
     expect(result).toMatchInlineSnapshot(`
       {
         "diagnostics": [],
-        "htmlSha256": "4dfd9e25b84295ba507c77ac8cbdbe31fe90ba6fe0349566d081adf8931b1328",
+        "htmlSha256": "f18af8f66103b271aab1f6866c5be196a815194eb107428afd401d102c5c20f1",
         "metadata": {
           "description": "日本語の説明",
           "lang": "ja-JP",
@@ -36,7 +36,7 @@ describe('refactoring compatibility contract', () => {
           "embeddedImageOccurrences": 0,
           "embeddedPayloadBytes": 0,
           "headingCount": 3,
-          "htmlBytes": 12031,
+          "htmlBytes": 12032,
           "imageOccurrences": 0,
           "omittedImageOccurrences": 0,
           "referencedImageOccurrences": 0,
@@ -115,7 +115,7 @@ describe('refactoring compatibility contract', () => {
             },
           },
         ],
-        "htmlSha256": "29eb3ad7c361c3fe6273ed4b036edcfe973602afc7c1371471a7a45911613a38",
+        "htmlSha256": "c07992ada393c903828d34f3295aa48d011cac764ed0c86cd4bef9bd64ff4846",
         "metadata": {
           "lang": "ja",
           "title": "安全",
@@ -124,7 +124,7 @@ describe('refactoring compatibility contract', () => {
           "embeddedImageOccurrences": 0,
           "embeddedPayloadBytes": 0,
           "headingCount": 2,
-          "htmlBytes": 12380,
+          "htmlBytes": 12369,
           "imageOccurrences": 0,
           "omittedImageOccurrences": 0,
           "referencedImageOccurrences": 0,
